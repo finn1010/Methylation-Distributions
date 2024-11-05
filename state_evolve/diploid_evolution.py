@@ -1,29 +1,22 @@
 from scipy import linalg
 import numpy as np
-import matplotlib.pyplot as plt
 
 initial_state = np.array([1, 0, 0])  
 mu = 0.02                          
 gamma = 0.02                 
 time_points = np.linspace(0, 200, 100)  
 
-RateMatrix = np.array([[-2*gamma, mu, 0], 
-                            [2*gamma, -(gamma + mu), 2*mu], 
-                            [0, gamma, -2*mu]])
+def diploid_prob_matrix(initial_state, mu, gamma, time_points):
+    RateMatrix = np.array([[-2*gamma, mu, 0], 
+                                [2*gamma, -(gamma + mu), 2*mu], 
+                                [0, gamma, -2*mu]])
 
-Probabilities = np.array([linalg.expm(RateMatrix * t) @ initial_state / np.sum(initial_state) 
-                          for t in time_points])
+    Probabilities = np.array([linalg.expm(RateMatrix * t) @ initial_state / np.sum(initial_state) 
+                            for t in time_points])
+    return Probabilities
 
-# def plot_prob_dist(time_points, probabilities):
-#     plt.figure(figsize=(10, 6))
-#     for state in range(Probabilities.shape[1]):
-#         plt.plot(time_points, Probabilities[:, state], label=f'State {state + 1}')
-#     plt.xlabel('Time')
-#     plt.ylabel('Probability')
-#     plt.title('Probability Distribution of Methylation States Over Time')
-#     plt.legend()
-#     plt.show()
-
+s = diploid_prob_matrix(initial_state, mu, gamma, time_points)
+print(s)
 def state_simulation(initial_state, mu, gamma):
     rng = np.random.default_rng()
     m,k,w = initial_state
@@ -53,23 +46,20 @@ def state_simulation(initial_state, mu, gamma):
 
 x = []
 
-def run_simulation(initial_state, mu, gamma, num_iterations=5000):
+def run_simulation_diploid(initial_state, mu, gamma, num_iterations=5000):
+    states = []
     current_state = initial_state
     for _ in range(num_iterations):
-        current_state = state_simulation(current_state, mu, gamma)  
-        x.append(current_state)  
+        current_state = state_simulation(current_state, mu, gamma)
+        states.append(current_state)
+    return states
 
-    return x
+def diploid_simulation(initial_state, mu, gamma):
+    final_states = run_simulation_diploid(initial_state, mu, gamma)
+    beta_vals = [(state[1] + 2 * state[0]) / 2 for state in final_states]
+    return beta_vals
 
-final_states = run_simulation(initial_state, mu, gamma)
-
-beta_vals = [(state[1] + 2 * state[0]) / 2 for state in final_states]
-
-# def hist_plot(beta_vals):
-#     plt.figure(figsize=(10, 6))
-#     plt.hist(beta_vals, bins=30, edgecolor='black')
-#     plt.title('Histogram of Beta Values')
-#     plt.xlabel('Beta')
-#     plt.ylabel('Frequency')
-#     plt.show()
+def diploid_beta_vals(states):
+    beta_vals = [(state[1] + 2 * state[0]) / 2 for state in states]
+    return beta_vals  
 

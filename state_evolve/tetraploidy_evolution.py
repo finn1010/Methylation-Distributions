@@ -1,11 +1,6 @@
 from scipy import linalg
 import numpy as np
-import matplotlib.pyplot as plt
 
-initial_state = np.array([1, 0, 0, 0, 0])  
-mu = 0.02             #methylation rate            
-gamma = 0.02          #demethylation rate 
-time_points = np.linspace(0, 200, 100)   
 
 def tetraploidy_prob_matrix(initial_state, mu, gamma, time_points):
     RateMatrix = np.array([
@@ -23,14 +18,6 @@ def tetraploidy_prob_matrix(initial_state, mu, gamma, time_points):
 
     return Probabilities
 
-# plt.figure(figsize=(10, 6))
-# for state in range(5):
-#     plt.plot(time_points, Probabilities[:, state], label=f'State {state + 1}')
-# plt.xlabel('Time')
-# plt.ylabel('Probability')
-# plt.title('Probability Distribution of Methylation States Over Time')
-# plt.legend()
-# plt.show()
 
 def state_simulation(initial_state, mu, gamma):
     rng = np.random.default_rng()
@@ -89,9 +76,3 @@ def tetraploidy_simulation(initial_state, mu, gamma):
     beta_vals = [(state[1] + 2 * state[2] + 3 * state[3] + 4 * state[4]) / 4 for state in final_states]
     return beta_vals
 
-# plt.figure(figsize=(10, 6))
-# plt.hist(beta_vals, bins=30, edgecolor='black')
-# plt.title('Histogram of Beta Values')
-# plt.xlabel('Beta')
-# plt.ylabel('Frequency')
-# plt.show()

@@ -1,31 +1,18 @@
 from scipy import linalg
 import numpy as np
-import matplotlib.pyplot as plt
 
-initial_state = np.array([1, 0, 0, 0])  
-mu = 0.02                          
-gamma = 0.02                 
-time_points = np.linspace(0, 200, 100)  
+def trisomy_prob_matrix(initial_state, mu, gamma, time_points):
+    RateMatrix = np.array([[-3*mu, gamma, 0, 0], 
+                                [3*mu, -(gamma+2*mu), 2*gamma, 0], 
+                                [0, 2*mu, -(2*gamma+mu), 3*gamma],
+                                [0, 0, mu, -3*gamma]])
 
+    Probabilities = np.zeros((len(time_points), len(initial_state)))
+    for i, t in enumerate(time_points):
+        ProbStates = linalg.expm(RateMatrix * t) @ initial_state
+        Probabilities[i] = ProbStates / np.sum(ProbStates) 
+    return Probabilities
 
-RateMatrix = np.array([[-3*mu, gamma, 0, 0], 
-                            [3*mu, -(gamma+2*mu), 2*gamma, 0], 
-                            [0, 2*mu, -(2*gamma+mu), 3*gamma],
-                            [0, 0, mu, -3*gamma]])
-
-Probabilities = np.zeros((len(time_points), len(initial_state)))
-for i, t in enumerate(time_points):
-    ProbStates = linalg.expm(RateMatrix * t) @ initial_state
-    Probabilities[i] = ProbStates / np.sum(ProbStates) 
-
-plt.figure(figsize=(10, 6))
-for state in range(4):
-    plt.plot(time_points, Probabilities[:, state], label=f'State {state + 1}')
-plt.xlabel('Time')
-plt.ylabel('Probability')
-plt.title('Probability Distribution of Methylation States Over Time')
-plt.legend()
-plt.show()
 
 def state_simulation(initial_state, mu, gamma):
     rng = np.random.default_rng()
@@ -63,23 +50,19 @@ def state_simulation(initial_state, mu, gamma):
 
     return [m, k, d, w]
 
-x = []
-
-def run_simulation(initial_state, mu, gamma, num_iterations=5000):
+def run_simulation_trisomy(initial_state, mu, gamma, num_iterations=5000):
+    states = []
     current_state = initial_state
     for _ in range(num_iterations):
-        current_state = state_simulation(current_state, mu, gamma)  
-        x.append(current_state)  
+        current_state = state_simulation(current_state, mu, gamma)
+        states.append(current_state)
+    return states
 
-    return x
+def trisomy_simulation(initial_state, mu, gamma):
+    final_states = run_simulation(initial_state, mu, gamma)
+    beta_vals = [(state[1] + 2 * state[2] + 3 * state[3]) / 3 for state in final_states]
+    return beta_vals
 
-final_states = run_simulation(initial_state, mu, gamma)
-
-beta_vals = [(state[1] + 2 * state[2] + 3 * state[3]) / 3 for state in final_states]
-
-# plt.figure(figsize=(10, 6))
-# plt.hist(beta_vals, bins=30, edgecolor='black')
-# plt.title('Histogram of Beta Values')
-# plt.xlabel('Beta')
-# plt.ylabel('Frequency')
-# plt.show()
+def trisomy_beta_vals(states):
+    beta_vals = [(state[1] + 2 * state[2] + 3 * state[3]) / 3 for state in states]
+    return beta_vals
