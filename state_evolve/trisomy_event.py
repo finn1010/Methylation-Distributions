@@ -9,3 +9,10 @@ def trisomy_event(mkw):
     mudw = np.array([m_cancer, u_cancer, d_cancer, w_cancer])
 
     return mudw
+
+def trisomy_event_prob(probabilities):
+    final_diploid_probs = probabilities[-1]
+    m_prob, k_prob, w_prob = final_diploid_probs
+    u_prob = d_prob = k_prob / 2
+    initial_trisomy_probs = [m_prob, u_prob, d_prob, w_prob]
+    return initial_trisomy_probs 

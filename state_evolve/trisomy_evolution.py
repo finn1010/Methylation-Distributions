@@ -59,7 +59,7 @@ def run_simulation_trisomy(initial_state, mu, gamma, num_iterations=5000):
     return states
 
 def trisomy_simulation(initial_state, mu, gamma):
-    final_states = run_simulation(initial_state, mu, gamma)
+    final_states = run_simulation_trisomy(initial_state, mu, gamma)
     beta_vals = [(state[1] + 2 * state[2] + 3 * state[3]) / 3 for state in final_states]
     return beta_vals
 

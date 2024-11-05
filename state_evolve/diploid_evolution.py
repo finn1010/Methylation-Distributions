@@ -16,7 +16,7 @@ def diploid_prob_matrix(initial_state, mu, gamma, time_points):
     return Probabilities
 
 s = diploid_prob_matrix(initial_state, mu, gamma, time_points)
-print(s)
+
 def state_simulation(initial_state, mu, gamma):
     rng = np.random.default_rng()
     m,k,w = initial_state

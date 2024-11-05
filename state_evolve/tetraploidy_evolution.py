@@ -63,7 +63,7 @@ def state_simulation(initial_state, mu, gamma):
 
     return [m, k, d, v, w]
 
-def run_simulation(initial_state, mu, gamma, num_iterations=5000):
+def run_simulation_tetraploidy(initial_state, mu, gamma, num_iterations=5000):
     states = []
     current_state = initial_state
     for _ in range(num_iterations):
@@ -72,7 +72,11 @@ def run_simulation(initial_state, mu, gamma, num_iterations=5000):
     return states
 
 def tetraploidy_simulation(initial_state, mu, gamma):
-    final_states = run_simulation(initial_state, mu, gamma)
+    final_states = run_simulation_tetraploidy(initial_state, mu, gamma)
     beta_vals = [(state[1] + 2 * state[2] + 3 * state[3] + 4 * state[4]) / 4 for state in final_states]
     return beta_vals
 
+
+def tetraploidy_beta_vals(states):
+    beta_vals = [(state[1] + 2 * state[2] + 3 * state[3] + 4 * state[4]) / 4 for state in states]
+    return beta_vals
