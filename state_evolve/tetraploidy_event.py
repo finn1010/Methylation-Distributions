@@ -7,7 +7,7 @@ def tetraploidy_event(mkw):
 
     return mukdw
 
-def trisomy_event_prob(probabilities):
+def tetraploidy_event_prob(probabilities):
     final_diploid_probs = probabilities[-1]
     m_prob,d_prob, w_prob = final_diploid_probs
     k_prob = v_prob = 0
