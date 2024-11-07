@@ -15,7 +15,7 @@ evoln_time = 350
 def diploid_to_cnLOH_hist(initial_state, mu, gamma):
     diploid_states = run_simulation_diploid(initial_state, mu, gamma, num_iterations=50000)
     beta_vals = []
-    be  ta_vals.append(diploid_beta_vals(diploid_states))
+    beta_vals.append(diploid_beta_vals(diploid_states))
     cnLOH_initial_state = cnLOH_event(diploid_states[-1])
     cnLOH_states = run_simulation_diploid(cnLOH_initial_state, mu, gamma, num_iterations=50000)
     beta_vals.append(diploid_beta_vals(cnLOH_states))
