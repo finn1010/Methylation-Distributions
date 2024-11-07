@@ -12,12 +12,12 @@ time_points = np.linspace(0, 200, 100)
 event_time = 140
 evoln_time = 350
 
-def diploid_to_tetraploidy_hist(initial_state, mu, gamma):
-    diploid_states = run_simulation_diploid(initial_state, mu, gamma, num_iterations=50000)
+def diploid_to_tetraploidy_hist(initial_state, mu, gamma, pre_time, post_time):
+    diploid_states = run_simulation_diploid(initial_state, mu, gamma, num_iterations=pre_time)
     beta_vals = []
     beta_vals.append(diploid_beta_vals(diploid_states))
     tetraploidy_initial_state = tetraploidy_event(diploid_states[-1])
-    tetraploidy_states = run_simulation_tetraploidy(tetraploidy_initial_state, mu, gamma, num_iterations=50000)
+    tetraploidy_states = run_simulation_tetraploidy(tetraploidy_initial_state, mu, gamma, num_iterations=post_time)
     beta_vals.append(tetraploidy_beta_vals(tetraploidy_states))
 
     hist_plot(beta_vals)

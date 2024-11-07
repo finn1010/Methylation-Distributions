@@ -11,12 +11,12 @@ gamma = 0.02
 event_time = 50
 evoln_time = 200
 
-def diploid_to_trisomy_hist(initial_state, mu, gamma):
-    diploid_states = run_simulation_diploid(initial_state, mu, gamma, num_iterations=50000)
+def diploid_to_trisomy_hist(initial_state, mu, gamma, pre_time, post_time):
+    diploid_states = run_simulation_diploid(initial_state, mu, gamma, num_iterations=pre_time)
     beta_vals = []
     beta_vals.append(diploid_beta_vals(diploid_states))
     trisomy_initial_state = trisomy_event(diploid_states[-1])
-    trisomy_states = run_simulation_trisomy(trisomy_initial_state, mu, gamma, num_iterations=50000)
+    trisomy_states = run_simulation_trisomy(trisomy_initial_state, mu, gamma, num_iterations=post_time)
     beta_vals.append(trisomy_beta_vals(trisomy_states))
     hist_plot(beta_vals)
 
