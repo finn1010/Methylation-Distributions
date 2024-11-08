@@ -11,20 +11,19 @@ gamma = 0.02
 time_points = np.linspace(0, 200, 100) 
 event_time = 140
 evoln_time = 350
-pre_time = 5000
-post_time = 5000
 
-def diploid_to_cnLOH_hist(initial_state, mu, gamma, pre_time, post_time):
-    diploid_states = run_simulation_diploid(initial_state, mu, gamma, num_iterations=pre_time)
+
+def diploid_to_cnLOH_hist(mu, gamma, num_cells, pre_time, post_time):
+    diploid_states = run_simulation_diploid(mu, gamma, num_cells, pre_time, initial_state=None)
     beta_vals = []
     beta_vals.append(diploid_beta_vals(diploid_states))
     cnLOH_initial_state = cnLOH_event(diploid_states[-1])
-    cnLOH_states = run_simulation_diploid(cnLOH_initial_state, mu, gamma, num_iterations=post_time)
+    cnLOH_states = run_simulation_diploid(mu, gamma, num_cells, post_time, cnLOH_initial_state)
     beta_vals.append(diploid_beta_vals(cnLOH_states))
 
     hist_plot(beta_vals)
 
-diploid_to_cnLOH_hist(initial_state, mu, gamma, pre_time, post_time)
+diploid_to_cnLOH_hist(mu, gamma, 100,100, 100)
 
 
 def diploid_to_cnLOH_prob_dist(initial_state, mu, gamma, event_time, evoln_time):

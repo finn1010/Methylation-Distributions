@@ -1,6 +1,16 @@
 from scipy import linalg
 import numpy as np
 
+def state_initialisation():
+    rng = np.random.default_rng()
+    m = [1,0,0,0]
+    w = [0,0,0,1]
+    if rng.random() > 0.5:
+        state = m
+    else:
+        state = w
+    return state
+
 def trisomy_prob_matrix(initial_state, mu, gamma, time_points):
     RateMatrix = np.array([[-3*mu, gamma, 0, 0], 
                                 [3*mu, -(gamma+2*mu), 2*gamma, 0], 
@@ -13,18 +23,30 @@ def trisomy_prob_matrix(initial_state, mu, gamma, time_points):
         Probabilities[i] = ProbStates / np.sum(ProbStates) 
     return Probabilities
 
+#put dt as fn argumeent
 
-def state_simulation(initial_state, mu, gamma):
+def calc_dt_trisomy(mu, gamma):
+    dt_max = 0.1 / np.max((
+    3*mu, 
+    3*gamma)
+    )
+    return dt_max 
+  
+
+
+def state_simulation(initial_state, mu, gamma, dt):
     rng = np.random.default_rng()
     m,k,d,w = initial_state
-    dt=1
+    
+# iterate over number of sites aswell and randomise initial conditioon
 
-    p_m_to_k = 3*mu * dt if m == 1 else 0  
+    p_m_to_k = 3 * mu * dt if m == 1 else 0  
     p_k_to_m = gamma * dt if k == 1 else 0         
     p_k_to_d = 2*mu * dt if k == 1 else 0      
     p_d_to_k = 2*gamma * dt if d == 1 else 0    
     p_d_to_w = mu * dt if d == 1 else 0      
-    p_w_to_d = 3*gamma * dt if w == 1 else 0    
+    p_w_to_d = 3*gamma * dt if w == 1 else 0  
+
 
     if m == 1:
         if rng.random() < p_m_to_k:
@@ -50,18 +72,19 @@ def state_simulation(initial_state, mu, gamma):
 
     return [m, k, d, w]
 
-def run_simulation_trisomy(initial_state, mu, gamma, num_iterations=5000):
-    states = []
-    current_state = initial_state
-    for _ in range(num_iterations):
-        current_state = state_simulation(current_state, mu, gamma)
-        states.append(current_state)
-    return states
-
-def trisomy_simulation(initial_state, mu, gamma):
-    final_states = run_simulation_trisomy(initial_state, mu, gamma)
-    beta_vals = [(state[1] + 2 * state[2] + 3 * state[3]) / 3 for state in final_states]
-    return beta_vals
+def run_simulation_trisomy(mu, gamma,initial_state, num_cells=100, num_iterations=10):
+    states = [] 
+    final_states = []
+    dt_max = calc_dt_trisomy(mu, gamma)
+    for _ in range(num_cells):
+        # if initial_state is None:
+        #     initial_state = state_initialisation()
+        current_state = initial_state
+        for _ in range(num_iterations):
+            current_state = state_simulation(current_state, mu, gamma,dt_max)
+            states.append(current_state)
+        final_states.append(states[-1])
+    return final_states
 
 def trisomy_beta_vals(states):
     beta_vals = [(state[1] + 2 * state[2] + 3 * state[3]) / 3 for state in states]

@@ -15,7 +15,8 @@ def plot_prob_dist(time_points, probabilities):
 def hist_plot(beta_vals):
     plt.figure(figsize=(10, 6))
     plt.hist(beta_vals, bins=30, edgecolor='black')
-    # plt.title('Histogram of Beta Values')
+    plt.title('Histogram of Beta Values')
     plt.xlabel('Beta')
     plt.ylabel('Frequency')
+    plt.legend()
     plt.show()

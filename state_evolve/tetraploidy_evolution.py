@@ -1,6 +1,15 @@
 from scipy import linalg
 import numpy as np
 
+def state_initialisation():
+    rng = np.random.default_rng()
+    m = [1,0,0,0,0]
+    w = [0,0,0,0,1]
+    if rng.random() > 0.5:
+        state = m
+    else:
+        state = w
+    return state
 
 def tetraploidy_prob_matrix(initial_state, mu, gamma, time_points):
     RateMatrix = np.array([
@@ -18,6 +27,12 @@ def tetraploidy_prob_matrix(initial_state, mu, gamma, time_points):
 
     return Probabilities
 
+def calc_dt_trisomy(mu, gamma):
+    dt_max = 0.1 / np.max((
+    4*mu, 
+    4*gamma)
+    )
+    return dt_max 
 
 def state_simulation(initial_state, mu, gamma):
     rng = np.random.default_rng()
@@ -63,18 +78,18 @@ def state_simulation(initial_state, mu, gamma):
 
     return [m, k, d, v, w]
 
-def run_simulation_tetraploidy(initial_state, mu, gamma, num_iterations=5000):
+def run_simulation_tetraploidy(mu, gamma, initial_state, num_cells=100, num_iterations=10):
     states = []
-    current_state = initial_state
-    for _ in range(num_iterations):
-        current_state = state_simulation(current_state, mu, gamma)
-        states.append(current_state)
-    return states
-
-def tetraploidy_simulation(initial_state, mu, gamma):
-    final_states = run_simulation_tetraploidy(initial_state, mu, gamma)
-    beta_vals = [(state[1] + 2 * state[2] + 3 * state[3] + 4 * state[4]) / 4 for state in final_states]
-    return beta_vals
+    final_states = []
+    dt_max = calc_dt_trisomy(mu, gamma)
+    for _ in range(num_cells):
+        # initial_state = state_initialisation()
+        current_state = initial_state
+        for _ in range(num_iterations):
+            current_state = state_simulation(current_state, mu, gamma)
+            states.append(current_state)
+        final_states.append(states[-1])
+    return final_states
 
 
 def tetraploidy_beta_vals(states):
