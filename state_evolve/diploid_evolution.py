@@ -10,10 +10,7 @@ def state_initialisation():
     else:
         state = w
     return state
-initial_state = np.array([1, 0, 0])  
-mu = 0.02                          
-gamma = 0.02                 
-time_points = np.linspace(0, 200, 100)  
+
 
 def diploid_prob_matrix(initial_state, mu, gamma, time_points):
     RateMatrix = np.array([[-2*gamma, mu, 0], 
@@ -24,7 +21,7 @@ def diploid_prob_matrix(initial_state, mu, gamma, time_points):
                             for t in time_points])
     return Probabilities
 
-s = diploid_prob_matrix(initial_state, mu, gamma, time_points)
+# s = diploid_prob_matrix(initial_state, mu, gamma, time_points)
 
 def calc_dt_diploid(mu, gamma):
     dt_max = 0.1 / np.max((
@@ -65,12 +62,19 @@ def run_simulation_diploid(mu, gamma, num_cells=100, num_iterations=10, initial_
     final_states = []
     dt_max = calc_dt_diploid(mu, gamma)
     
-    for _ in range(num_cells):
-        # Use provided initial state or initialize if not given
-        current_state = initial_state if initial_state is not None else state_initialisation()
-        
+    if initial_state is None:
+        for _ in range(num_cells):
+            # Use provided initial state or initialize if not given
+            current_state = initial_state if initial_state is not None else state_initialisation()
+            
+            for _ in range(num_iterations):
+                current_state = state_simulation(current_state, mu, gamma, dt_max)
+                states.append(current_state)
+            final_states.append(states[-1])
+    else:
+        current_state = initial_state
         for _ in range(num_iterations):
-            current_state = state_simulation(current_state, mu, gamma, dt_max)
+            current_state = state_simulation(current_state, mu, gamma,dt_max)
             states.append(current_state)
         final_states.append(states[-1])
     

@@ -4,13 +4,10 @@ def cnLOH_event(mkw):
     rng = np.random.default_rng()  
     m_cancer, k_cancer, w_cancer = mkw
     
-    # Randomly decide which allele type will be duplicated
-    if rng.binomial(1, 0.5) == 1:
-        # Duplicate the methylated allele
+    if rng.random() < 0.5:
         m_cancer += k_cancer
         k_cancer = 0
     else:
-        # Duplicate the wild-type allele
         w_cancer += k_cancer
         k_cancer = 0
     

@@ -76,14 +76,12 @@ def run_simulation_trisomy(mu, gamma,initial_state, num_cells=100, num_iteration
     states = [] 
     final_states = []
     dt_max = calc_dt_trisomy(mu, gamma)
-    for _ in range(num_cells):
-        # if initial_state is None:
-        #     initial_state = state_initialisation()
-        current_state = initial_state
-        for _ in range(num_iterations):
-            current_state = state_simulation(current_state, mu, gamma,dt_max)
-            states.append(current_state)
-        final_states.append(states[-1])
+    current_state = initial_state
+    for _ in range(num_iterations):
+        current_state = state_simulation(current_state, mu, gamma,dt_max)
+        states.append(current_state)
+    final_states.append(states[-1])
+    
     return final_states
 
 def trisomy_beta_vals(states):

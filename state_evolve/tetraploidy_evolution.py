@@ -82,13 +82,12 @@ def run_simulation_tetraploidy(mu, gamma, initial_state, num_cells=100, num_iter
     states = []
     final_states = []
     dt_max = calc_dt_trisomy(mu, gamma)
-    for _ in range(num_cells):
-        # initial_state = state_initialisation()
-        current_state = initial_state
-        for _ in range(num_iterations):
-            current_state = state_simulation(current_state, mu, gamma)
-            states.append(current_state)
-        final_states.append(states[-1])
+    current_state = initial_state
+    for _ in range(num_iterations):
+        current_state = state_simulation(current_state, mu, gamma)
+        states.append(current_state)
+    final_states.append(states[-1])
+    
     return final_states
 
 
