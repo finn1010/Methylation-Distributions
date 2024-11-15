@@ -4,14 +4,8 @@ from state_evolve.diploid_evolution import run_simulation_diploid, diploid_beta_
 from state_evolve.cnLOH_event import cnLOH_event, cnLOH_event_prob
 from plot import hist_plot
 from colours import pallet_dip
-
-initial_state = np.array([1, 0, 0])  
 mu = 0.02                          
 gamma = 0.02                 
-time_points = np.linspace(0, 200, 100) 
-
-
-
 
 
 def diploid_to_cnLOH_hist(mu, gamma, num_sites, event_time, patient_age,fig_name):

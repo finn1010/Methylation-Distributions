@@ -5,10 +5,8 @@ from state_evolve.tetraploidy_evolution import run_simulation_tetraploidy, tetra
 from state_evolve.tetraploidy_event import tetraploidy_event, tetraploidy_event_prob
 from plot import hist_plot
 from colours import pallet_dip, pallet_tet
-initial_state = np.array([1, 0, 0])  
 mu = 0.02                          
 gamma = 0.02                 
-time_points = np.linspace(0, 200, 100) 
 
 
 def diploid_to_tetraploidy_hist(mu, gamma, num_sites, event_time, patient_age,fig_name):

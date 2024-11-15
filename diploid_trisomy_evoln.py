@@ -6,7 +6,6 @@ from state_evolve.trisomy_evolution import run_simulation_trisomy, trisomy_beta_
 from state_evolve.trisomy_event import trisomy_event, trisomy_event_prob
 from plot import hist_plot, plot_prob_dist
 from colours import pallet_dip, pallet_tri
-initial_state = np.array([1, 0, 0])  
 mu = 0.02                          
 gamma = 0.02                 
 
