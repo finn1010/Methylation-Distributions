@@ -2,8 +2,9 @@
 .env
 .venv/
 
-#ignore system files
 .DS_Store
 
-# Ignore logs and temp files
 *.log
+
+__pycache__/
+*.pyc

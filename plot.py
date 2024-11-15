@@ -14,13 +14,13 @@ def plot_prob_dist(time_points, probabilities, plt_title):
     plt.show()
 
 def hist_plot(beta_vals_before, beta_vals_after, event_type, pre_time,post_time,fig_name):
-    plt.hist(beta_vals_before, bins=30, edgecolor='black', alpha=0.5, label=f'Time before event ({pre_time} years)', density=True, align='mid')
-    plt.hist(beta_vals_after, bins=30, edgecolor='black', alpha=0.5, label=f'Time after event ({post_time} years)', density=True, align='mid')
+    plt.hist(beta_vals_before, bins=30, edgecolor='black', alpha=0.5, label=f'Time before event ({pre_time} years)', density=False, align='mid')
+    plt.hist(beta_vals_after, bins=30, edgecolor='black', alpha=0.5, label=f'Time after event ({post_time} years)', density=False, align='mid')
     
     plt.xlabel('Beta Values')
     plt.ylabel('Probability Density')
     plt.title(f'Beta values before and after Diploid to {event_type} event')
-    plt.legend(fontsize=9)
+    plt.legend(loc='upper right', fontsize=8)
     plt.savefig(f'{fig_name}.pdf', format='pdf', dpi=300)
     plt.show()
 

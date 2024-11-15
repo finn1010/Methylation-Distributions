@@ -3,15 +3,17 @@ import numpy as np
 def cnLOH_event(mkw):
     rng = np.random.default_rng()  
     m_cancer, k_cancer, w_cancer = mkw
-    
-    if rng.random() < 0.5:
-        m_cancer += k_cancer
-        k_cancer = 0
-    else:
-        w_cancer += k_cancer
-        k_cancer = 0
+    if k_cancer == 1:
+        if rng.random() < 0.5:
+            m_cancer += k_cancer
+            k_cancer = 0
+        else:
+            w_cancer += k_cancer
+            k_cancer = 0
     
     return np.array([m_cancer, k_cancer, w_cancer])
+
+
 def cnLOH_event_prob(probabilities):
     final_diploid_probs = probabilities[-1]
     m_prob, k_prob, w_prob = final_diploid_probs

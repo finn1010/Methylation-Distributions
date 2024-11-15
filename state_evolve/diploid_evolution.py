@@ -21,19 +21,25 @@ def diploid_prob_matrix(initial_state, mu, gamma, time_points):
                             for t in time_points])
     return Probabilities
 
-# s = diploid_prob_matrix(initial_state, mu, gamma, time_points)
 
-def calc_dt_diploid(mu, gamma):
-    dt_max = 0.1 / np.max((
+def calc_dt_max_diploid(mu, gamma):
+    dt_max = 0.01 / np.max((
     2*mu, 
     2*gamma)
     )
     return dt_max 
 
+def diploid_dt(start_evoln, end_evoln, dt_max):
+    n = int((end_evoln-start_evoln) / dt_max) + 2  # Number of time steps.
+    t = np.linspace(start_evoln, end_evoln, n) 
+    dt = t[1] - t[0]
+    return dt
+
+
 def state_simulation(initial_state, mu, gamma, dt):
     rng = np.random.default_rng()
     m,k,w = initial_state
-
+    
     p_m_to_k = 2 * gamma * dt if m == 1 else 0  
     p_k_to_m = gamma * dt if k == 1 else 0         
     p_k_to_w = mu * dt if k == 1 else 0      
@@ -44,11 +50,15 @@ def state_simulation(initial_state, mu, gamma, dt):
             m, k, w = 0, 1, 0  
 
     elif k == 1:
-        if rng.random() < p_k_to_m:
+        rand_val = rng.random()
+        if rand_val < p_k_to_m:
             m, k, w = 1, 0, 0  
             
-        elif rng.random() < p_k_to_w:
+        elif rand_val < p_k_to_w + p_k_to_m:
             m, k, w = 0, 0, 1  
+
+        else:
+            m, k, w = 0, 1, 0
 
     elif w == 1:
         if rng.random() < p_w_to_k:
@@ -57,24 +67,24 @@ def state_simulation(initial_state, mu, gamma, dt):
     return [m, k, w]
 
 
-def run_simulation_diploid(mu, gamma, num_cells=100, num_iterations=10, initial_state=None):
+def run_simulation_diploid(mu, gamma, num_sites=100, start_evoln=0, end_evoln=10, initial_state=None):
     states = []
     final_states = []
-    dt_max = calc_dt_diploid(mu, gamma)
+    dt_max = calc_dt_max_diploid(mu, gamma)
+    dt = diploid_dt(start_evoln, end_evoln, dt_max)
     
     if initial_state is None:
-        for _ in range(num_cells):
-            # Use provided initial state or initialize if not given
-            current_state = initial_state if initial_state is not None else state_initialisation()
+        for _ in range(num_sites):
+            current_state = state_initialisation()
             
-            for _ in range(num_iterations):
-                current_state = state_simulation(current_state, mu, gamma, dt_max)
+            for _ in range(end_evoln):
+                current_state = state_simulation(current_state, mu, gamma, dt)
                 states.append(current_state)
             final_states.append(states[-1])
     else:
         current_state = initial_state
-        for _ in range(num_iterations):
-            current_state = state_simulation(current_state, mu, gamma,dt_max)
+        for _ in range(end_evoln):
+            current_state = state_simulation(current_state, mu, gamma,dt)
             states.append(current_state)
         final_states.append(states[-1])
     

@@ -27,17 +27,23 @@ def tetraploidy_prob_matrix(initial_state, mu, gamma, time_points):
 
     return Probabilities
 
-def calc_dt_trisomy(mu, gamma):
+def calc_dt_tetraploidy(mu, gamma):
     dt_max = 0.1 / np.max((
     4*mu, 
     4*gamma)
     )
     return dt_max 
 
-def state_simulation(initial_state, mu, gamma):
+def tet_dt(start_evoln, end_evoln, dt_max):
+    n = int((end_evoln-start_evoln) / dt_max) + 2  # Number of time steps.
+    t = np.linspace(start_evoln, end_evoln, n) 
+    dt = t[1] - t[0]
+    return dt
+
+def state_simulation(initial_state, mu, gamma, dt):
     rng = np.random.default_rng()
     m, k, d, v, w = initial_state
-    dt=1
+
     p_m_to_k = 4*mu * dt if m == 1 else 0  
     p_k_to_m = gamma * dt if k == 1 else 0         
     p_k_to_d = 3*mu * dt if k == 1 else 0      
@@ -52,25 +58,37 @@ def state_simulation(initial_state, mu, gamma):
             m, k, d, v, w = 0, 1, 0, 0, 0
 
     elif k == 1:
-        if rng.random() < p_k_to_m:
+        rand_val = rng.random()
+        if rand_val < p_k_to_m:
             m, k, d, v, w = 1, 0, 0, 0, 0
             
-        elif rng.random() < p_k_to_d:
+        elif rand_val < p_k_to_d + p_k_to_m:
             m, k, d, v, w = 0, 0, 1, 0, 0
 
+        else:
+            m, k, d, v, w = 0, 1, 0, 0, 0
+
     elif d == 1:
-        if rng.random() < p_d_to_k:
+        rand_val = rng.random()
+        if rand_val < p_d_to_k:
             m, k, d, v, w = 0, 1, 0, 0, 0
             
-        elif rng.random() < p_d_to_v:
+        elif rand_val < p_d_to_v + p_d_to_k:
             m, k, d, v, w = 0, 0, 0, 1, 0
+
+        else:
+            m, k, d, v, w = 0, 0, 1, 0, 0
     
     elif v == 1:
-        if rng.random() < p_v_to_d:
+        rand_val = rng.random()
+        if rand_val < p_v_to_d:
             m, k, d, v, w = 0, 0, 1, 0, 0
             
-        elif rng.random() < p_v_to_w:
+        elif rand_val < p_v_to_w + p_v_to_d:
             m, k, d, v, w = 0, 0, 0, 0, 1
+
+        else:
+            m, k, d, v, w = 0, 0, 0, 1, 0
 
     elif w == 1:
         if rng.random() < p_w_to_v:
@@ -78,13 +96,18 @@ def state_simulation(initial_state, mu, gamma):
 
     return [m, k, d, v, w]
 
-def run_simulation_tetraploidy(mu, gamma, initial_state, num_cells=100, num_iterations=10):
+def run_simulation_tetraploidy(mu, gamma, initial_state, start_evoln, end_evoln):
+    '''
+    end_evoln = patient_age - event_time
+    start_evoln is either 0 or the event time
+    '''
     states = []
     final_states = []
-    dt_max = calc_dt_trisomy(mu, gamma)
+    dt_max = calc_dt_tetraploidy(mu, gamma)
+    dt = tet_dt(start_evoln, end_evoln, dt_max)
     current_state = initial_state
-    for _ in range(num_iterations):
-        current_state = state_simulation(current_state, mu, gamma)
+    for _ in range(end_evoln):
+        current_state = state_simulation(current_state, mu, gamma, dt)
         states.append(current_state)
     final_states.append(states[-1])
     
