@@ -53,7 +53,7 @@ vector diploid_prob(real t, vector initial_state, real gamma, real mu) {
     // Return updated probabilities as a vector
     vector[3] initial_cnLOH_probs;
     initial_cnLOH_probs[1] = m_prob;
-    initial_cnLOH_probs[2] = 0;
+    initial_cnLOH_probs[2] = k_prob;
     initial_cnLOH_probs[3] = w_prob;
 
     return initial_cnLOH_probs;
@@ -100,11 +100,11 @@ transformed parameters{
        // print(pos_obs[i]);
     }
 
-for (i in 1:K+1) {
-    a[i] = kappa * pos_obs[i]; 
-    b[i] = kappa * (1 - pos_obs[i]);
-}
-    //function this
+    for (i in 1:K+1) {
+        a[i] = kappa * pos_obs[i]; 
+        b[i] = kappa * (1 - pos_obs[i]);
+    }
+    
     vector[K+1] initial_state = ss_init_prob(mu, gamma);
     //vector[K+1] state_probs = diploid_prob((t), initial_state, gamma, mu);
     vector[K+1] post_cnLOH_state_probs = cnLOH_event_prob(initial_state);

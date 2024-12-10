@@ -62,7 +62,7 @@ def diploid_to_cnLOH_hist(mu, gamma, init_fn, num_sites, event_time, patient_age
     cnLOH_state_list = []
     for state in final_diploid_states:
         cnLOH_initial_state = cnLOH_event(state)
-        cnLOH_states = run_simulation_diploid(mu, gamma, num_sites, start_evoln=0, end_evoln=patient_age-event_time, initial_state=cnLOH_initial_state)
+        cnLOH_states = run_simulation_diploid(mu, gamma, num_sites, start_evoln=event_time, end_evoln=patient_age, initial_state=cnLOH_initial_state)
         cnLOH_state_list.extend(cnLOH_states)
     beta_vals_after.append(diploid_beta_vals(cnLOH_state_list))
     beta_vals_after1 = np.array(beta_vals_after)
