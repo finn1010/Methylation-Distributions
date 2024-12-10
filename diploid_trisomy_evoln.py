@@ -1,17 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from state_evolve.diploid_evolution import run_simulation_diploid, diploid_beta_vals, diploid_prob_matrix
+from state_evolve.diploid_evolution import run_simulation_diploid, diploid_beta_vals, diploid_prob_matrix, state_initialisation, ss_initialisation, ss_init_prob
 from state_evolve.trisomy_evolution import run_simulation_trisomy, trisomy_beta_vals, trisomy_prob_matrix
 from state_evolve.trisomy_event import trisomy_event, trisomy_event_prob
 from plot import hist_plot, plot_prob_dist
 from colours import pallet_dip, pallet_tri
-mu = 0.02                          
-gamma = 0.02                 
+              
 
 
-def diploid_to_trisomy_hist(mu, gamma, num_sites, event_time, patient_age,fig_name):
-    final_diploid_states = run_simulation_diploid(mu, gamma, num_sites, start_evoln=0, end_evoln=event_time, initial_state=None)
+def diploid_to_trisomy_hist(mu, gamma, init_fn, num_sites, event_time, patient_age,fig_name):
+    final_diploid_states = run_simulation_diploid(mu, gamma,init_fn, num_sites, start_evoln=0, end_evoln=event_time, initial_state=None)
     beta_vals_before = []
     beta_vals_after = []
     beta_vals_before.append(diploid_beta_vals(final_diploid_states))
@@ -24,8 +23,13 @@ def diploid_to_trisomy_hist(mu, gamma, num_sites, event_time, patient_age,fig_na
  
     hist_plot(beta_vals_before, beta_vals_after,'Trisomy', event_time, patient_age-event_time,fig_name)
 
-diploid_to_trisomy_hist(mu, gamma, 1000, 10, 60,'/Users/finnkane/Desktop/ICR/plots/Trisomy/Hist/tri_hist_tau=10')
-diploid_to_trisomy_hist(mu, gamma, 1000, 50, 55,'/Users/finnkane/Desktop/ICR/plots/Trisomy/Hist/tri_hist_tau=50')
+mu = 0.02                          
+gamma = 0.02   
+diploid_to_trisomy_hist(mu, gamma, ss_initialisation, 1000, 10, 60,'/Users/finnkane/Desktop/ICR/plots/Trisomy/Hist/ss_tri_hist_tau=10')
+diploid_to_trisomy_hist(mu, gamma, ss_initialisation, 1000, 50, 60,'/Users/finnkane/Desktop/ICR/plots/Trisomy/Hist/ss_tri_hist_tau=50')
+
+diploid_to_trisomy_hist(mu, gamma, state_initialisation, 1000, 10, 60,'/Users/finnkane/Desktop/ICR/plots/Trisomy/Hist/tri_hist_tau=10')
+diploid_to_trisomy_hist(mu, gamma, state_initialisation, 1000, 50, 60,'/Users/finnkane/Desktop/ICR/plots/Trisomy/Hist/tri_hist_tau=50')
 
 def diploid_to_trisomy_prob_dist(initial_state, mu, gamma, event_time, evoln_time, fig_name):
 
@@ -54,6 +58,7 @@ def diploid_to_trisomy_prob_dist(initial_state, mu, gamma, event_time, evoln_tim
     plt.savefig(f'{fig_name}.pdf', format='pdf', dpi=300)
     plt.show()
     
+initial_state = ss_init_prob(0.02,0.02)
 event_time = 10
 evoln_time = 60
 diploid_to_trisomy_prob_dist(initial_state, mu, gamma, event_time, evoln_time,'/Users/finnkane/Desktop/ICR/plots/Trisomy/Prob/tri_prob_tau=10')

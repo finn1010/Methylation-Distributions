@@ -89,7 +89,7 @@ def run_simulation_trisomy(mu, gamma, initial_state, start_evoln, end_evoln):
     dt_max = calc_dt_trisomy(mu, gamma)
     dt = tri_dt(start_evoln, end_evoln, dt_max)
     current_state = initial_state
-    for _ in range(end_evoln):
+    for _ in range(int(end_evoln/dt)+1):
         current_state = state_simulation(current_state, mu, gamma,dt)
         states.append(current_state)
     final_states.append(states[-1])

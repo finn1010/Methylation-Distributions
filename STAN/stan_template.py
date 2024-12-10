@@ -24,7 +24,9 @@ model {
     y ~ normal(alpha + beta * x, sigma);
 }
 """
-
+def x(l):
+    for i in range(l,1):
+        print(i)
 # Save model to a .stan file
 with open("linear_model.stan", "w") as file:
     file.write(stan_model_code)

@@ -1,16 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from state_evolve.diploid_evolution import run_simulation_diploid, diploid_beta_vals, diploid_prob_matrix
+from state_evolve.diploid_evolution import run_simulation_diploid, diploid_beta_vals, diploid_prob_matrix, ss_initialisation, state_initialisation
 from state_evolve.tetraploidy_evolution import run_simulation_tetraploidy, tetraploidy_beta_vals, tetraploidy_prob_matrix
 from state_evolve.tetraploidy_event import tetraploidy_event, tetraploidy_event_prob
 from plot import hist_plot
 from colours import pallet_dip, pallet_tet
-mu = 0.02                          
-gamma = 0.02                 
+               
 
 
-def diploid_to_tetraploidy_hist(mu, gamma, num_sites, event_time, patient_age,fig_name):
-    final_diploid_states = run_simulation_diploid(mu, gamma, num_sites, start_evoln=0, end_evoln=event_time, initial_state=None)
+def diploid_to_tetraploidy_hist(mu, gamma, init_fn, num_sites, event_time, patient_age,fig_name):
+    final_diploid_states = run_simulation_diploid(mu, gamma,init_fn, num_sites, start_evoln=0, end_evoln=event_time, initial_state=None)
     beta_vals_before = []
     beta_vals_after = []
     beta_vals_before.append(diploid_beta_vals(final_diploid_states))
@@ -23,8 +22,13 @@ def diploid_to_tetraploidy_hist(mu, gamma, num_sites, event_time, patient_age,fi
  
     hist_plot(beta_vals_before, beta_vals_after,'Tetraploidy', event_time, patient_age-event_time,fig_name)
 
-diploid_to_tetraploidy_hist(mu, gamma, 1000, 10, 60,'/Users/finnkane/Desktop/ICR/plots/Tetraploidy/Hist/tet_hist_tau=10')
-diploid_to_tetraploidy_hist(mu, gamma, 1000, 50, 60,'/Users/finnkane/Desktop/ICR/plots/Tetraploidy/Hist/tet_hist_tau=50')
+mu = 0.02                          
+gamma = 0.02  
+diploid_to_tetraploidy_hist(mu, gamma, ss_initialisation, 1000, 10, 60,'/Users/finnkane/Desktop/ICR/plots/Tetraploidy/Hist/ss_tet_hist_tau=10')
+diploid_to_tetraploidy_hist(mu, gamma, ss_initialisation, 1000, 50, 60,'/Users/finnkane/Desktop/ICR/plots/Tetraploidy/Hist/ss_tet_hist_tau=50')
+
+diploid_to_tetraploidy_hist(mu, gamma, state_initialisation, 1000, 10, 60,'/Users/finnkane/Desktop/ICR/plots/Tetraploidy/Hist/tet_hist_tau=10')
+diploid_to_tetraploidy_hist(mu, gamma, state_initialisation, 1000, 50, 60,'/Users/finnkane/Desktop/ICR/plots/Tetraploidy/Hist/tet_hist_tau=50')
 
 
 def diploid_to_tetraploidy_prob_dist(initial_state, mu, gamma, event_time, evoln_time, fig_name):
@@ -55,7 +59,7 @@ def diploid_to_tetraploidy_prob_dist(initial_state, mu, gamma, event_time, evoln
     plt.savefig(f'{fig_name}.pdf', format='pdf', dpi=300)
     plt.show()
     
-
+initial_state = ss_initialisation(mu,gamma)
 event_time = 10
 evoln_time = 60
 diploid_to_tetraploidy_prob_dist(initial_state, mu, gamma, event_time, evoln_time, '/Users/finnkane/Desktop/ICR/plots/Tetraploidy/Prob/tet_prob_tau=10')
