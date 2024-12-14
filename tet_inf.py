@@ -64,11 +64,16 @@ def diploid_to_tetraploidy(mu, gamma, init_fn, num_sites, event_time, patient_ag
     tetraploidy_state_list = []
     for state in final_diploid_states:
         tetraploidy_initial_state = tetraploidy_event(state)
-        tetraploidy_states = run_simulation_tetraploidy(mu, gamma, tetraploidy_initial_state, start_evoln=event_time, end_evoln=patient_age)
+        tetraploidy_states = run_simulation_tetraploidy(mu, gamma, tetraploidy_initial_state, start_evoln=0, end_evoln=patient_age-event_time)
         tetraploidy_state_list.extend(tetraploidy_states)
-    beta_vals_after.append(diploid_beta_vals(tetraploidy_state_list))
+    beta_vals_after.append(tetraploidy_beta_vals(tetraploidy_state_list))
     beta_vals_after1 = np.array(beta_vals_after)
     for beta_val in beta_vals_after1:
-        noisy_beta_after = add_noise(beta_val, 0.3,0.7,1)
+        noisy_beta_after = add_noise(beta_val, 0.05,0.95,30)
+    # hist_plot(noisy_beta_before, noisy_beta_after,'Trisomy', event_time, patient_age-event_time, 'e.png')
 
     return noisy_beta_before, noisy_beta_after
+
+# mu = 0.02                          
+# gamma = 0.02 
+# diploid_to_tetraploidy(mu, gamma, ss_initialisation, 1000, 10, 60)

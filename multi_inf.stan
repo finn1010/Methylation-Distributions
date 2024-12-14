@@ -9,6 +9,7 @@ functions {
 
         return probs;
     }
+
     matrix dip_rate_matrix(real gamma, real mu) {
         matrix[3, 3] R;
         R[1, 1] = -2 * gamma;
@@ -127,6 +128,7 @@ functions {
 
         return initial_cnLOH_probs;
         }
+
     vector tri_event_prob(vector probabilities) {
         real m_prob = probabilities[1];
         real k_prob = probabilities[2];
@@ -187,8 +189,8 @@ functions {
         return altered_state_probs;
     }
 
-    vector dip_cnloh_evln(real t, real age, real mu, real gamma) {
-        vector[3] initial_state = ss_init_prob(mu, gamma);
+    vector dip_cnloh_evln(real t, real age, real mu, real gamma, vector initial_state) {
+       
         vector[3] state_probs = diploid_prob(t, initial_state, mu, gamma);
         vector[3] post_cnloh_state_probs = cnLOH_event_prob(state_probs);
         vector[3] altered_state_probs = diploid_prob(age - t, post_cnloh_state_probs, mu, gamma);
@@ -196,9 +198,8 @@ functions {
         return altered_state_probs;
     }
 
-    vector dip_tri_evln(real t, real age, real mu, real gamma) {
+    vector dip_tri_evln(real t, real age, real mu, real gamma, vector initial_state) {
 
-        vector[3] initial_state = ss_init_prob(mu, gamma);
         vector[3] state_probs = diploid_prob((t), initial_state, mu, gamma);
         vector[4] post_tri_state_probs = tri_event_prob(state_probs);
         vector[4] altered_state_probs = tri_prob(age - t, post_tri_state_probs, mu, gamma);
@@ -206,9 +207,8 @@ functions {
         return altered_state_probs;
     }
 
-    vector dip_tet_evln(real t, real age, real mu, real gamma) {
+    vector dip_tet_evln(real t, real age, real mu, real gamma, vector initial_state) {
 
-        vector[3] initial_state = ss_init_prob(mu, gamma);
         vector[3] state_probs = diploid_prob((t), initial_state, mu, gamma);
         vector[5] post_tet_state_probs = tet_event_prob(state_probs);
         vector[5] altered_state_probs = tet_prob(age - t, post_tet_state_probs, mu, gamma);
@@ -218,17 +218,34 @@ functions {
 }
 
 data{
-    int<lower=1> K;                  //number of mixture components
-    int<lower=0> N;                 //num sites
-    array[N] real<lower=0,upper=1> y;    //observed beta values
+    int<lower=1> K;                        //number of mixture components
+    int<lower=0> N;                        //num sites
+    array[N] real<lower=0,upper=1> y;     //observed beta values
     int<lower=0> age;
     int<lower=1,upper=6> type;
 }
 transformed data {
-    ordered[3] position;
-    position[1] = 0.0;
-    position[2] = 0.5;
-    position[3] = 1.0;
+    ordered[K+1] position;
+
+    if (type==1 || type==4){
+        position[1] = 0.0;
+        position[2] = 0.5;
+        position[3] = 1.0;
+    } else if (type==2 || type==5){
+        position[1] = 0.0;
+        position[2] = 1.0/3.0;
+        position[3] = 2.0/3.0;
+        position[4] = 1.0;
+    } else if (type==3 || type==6){
+        position[1] = 0.0;
+        position[2] = 1.0/4.0;
+        position[3] = 2.0/4.0;
+        position[4] = 3.0/4.0;
+        position[5] = 1.0;
+    }
+
+    real rand_val = uniform_rng(0, 1);
+
 }
 
 
@@ -241,54 +258,59 @@ parameters{
     real<lower=0,upper=1> eta;          //Beta dist parameter
     real<lower=0,upper=1> delta;        //Beta dist parameter
 
-
 }
 
-transformed parameters{
+transformed parameters {
     array[K+1] real<lower=0> a;  // Beta distribution shape parameter a
     array[K+1] real<lower=0> b;  // Beta distribution shape parameter b
-    array[K+1] real pos_obs; 
+    array[K+1] real pos_obs;
     vector[K+1] cache_theta;
+    
 
-    for (i in 1:K+1){
-        pos_obs[i] = (eta-delta) * position[i] + delta;
-       // print(pos_obs[i]);
+    for (i in 1:K+1) {
+        pos_obs[i] = (eta - delta) * position[i] + delta;
     }
 
     for (i in 1:K+1) {
         a[i] = kappa * pos_obs[i]; 
         b[i] = kappa * (1 - pos_obs[i]);
     }
+    vector[3] initial_state;
 
-    if(type==1){
+    if (type==4 || type==5 || type==6){
+
+
+        if (rand_val > 0.5) {
+            initial_state = [1, 0, 0]';
+        } else {
+            initial_state = [0, 0, 1]';
+        }
+    }
+
+    if (type == 1) {
         cache_theta = ss_cnloh_evln(t, age, mu, gamma);
-    }
-    else if(type==2){
+    } else if (type == 2) {
         cache_theta = ss_tri_evln(t, age, mu, gamma);
-    }
-    else if(type==3){
+    } else if (type == 3) {
         cache_theta = ss_tet_evln(t, age, mu, gamma);
+    } else if (type == 4) {
+        cache_theta = dip_cnloh_evln(t, age, mu, gamma, initial_state);
+    } else if (type == 5) {
+        cache_theta = dip_tri_evln(t, age, mu, gamma, initial_state);
+    } else if (type == 6) {
+        cache_theta = dip_tet_evln(t, age, mu, gamma, initial_state);
     }
-    else if(type==4){
-        cache_theta = dip_cnloh_evln(t, age, mu, gamma);
-    }
-    else if(type==5){
-        cache_theta = dip_tri_evln(t, age, mu, gamma);
-    }
-    else if(type==6){
-        cache_theta = dip_tet_evln(t, age, mu, gamma);
-    }
-
 }
 
 model {
     // Priors
     // theta and CNA time are flat priors
-    kappa ~ lognormal(3.8, 0.5);       
+    kappa ~ lognormal(3.6, 0.5);       
     delta ~ beta(5,95);
     eta ~ beta(95,5);
     mu ~ normal(0,0.05);
     gamma ~ normal(0,0.05);
+  //  rand_val ~ uniform(0, 1);
 
 
     // Likelihood
@@ -301,6 +323,26 @@ model {
         target += log_sum_exp(log_likelihood); // Log mixture likelihood
     }
 }
+generated quantities {
+    vector[N] y_rep;              // Replicated data
+    vector[N] log_lik;            // Log-likelihood for diagnostics
+    
+    for (n in 1:N) {
+        vector[K+1] log_likelihood = log(cache_theta);  // Log mixture weights
+        
+        for (k in 1:K+1) {
+            log_likelihood[k] += beta_lpdf(y[n] | a[k], b[k]);  // Log mixture density
+        }
+        
+        // Store log-likelihood for model checking
+        log_lik[n] = log_sum_exp(log_likelihood);
+        
+        // Posterior predictive simulation
+        int k_sim = categorical_rng(softmax(log_likelihood));  // Sample component
+        y_rep[n] = beta_rng(a[k_sim], b[k_sim]);              // Simulated y value
+    }
+}
+
 
 
 // check: theta/cahce theta calculation 

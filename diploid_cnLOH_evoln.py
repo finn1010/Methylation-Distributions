@@ -67,15 +67,15 @@ def diploid_to_cnLOH_hist(mu, gamma, init_fn, num_sites, event_time, patient_age
     beta_vals_after.append(diploid_beta_vals(cnLOH_state_list))
     beta_vals_after1 = np.array(beta_vals_after)
     for beta_val in beta_vals_after1:
-        noisy_beta_after = add_noise(beta_val, 0.3,0.7,1)
+        noisy_beta_after = add_noise(beta_val,0.05,0.95,30)
     # hist_plot(beta_vals_before, beta_vals_after,'cnLOH', event_time, patient_age-event_time,fig_name)
 
     hist_plot(noisy_beta_before, noisy_beta_after,'cnLOH', event_time, patient_age-event_time,fig_name)
 
 mu = 0.02                          
 gamma = 0.02   
-diploid_to_cnLOH_hist(mu, gamma, ss_initialisation, 1000, 10, 60,'/Users/finnkane/Desktop/ICR/plots/cnLOH/Hist/ss_cnLOH_hist_tau=10')
-diploid_to_cnLOH_hist(mu, gamma, ss_initialisation, 1000, 50, 60,'/Users/finnkane/Desktop/ICR/plots/cnLOH/Hist/ss_cnLOH_hist_tau=50')
+diploid_to_cnLOH_hist(mu, gamma, ss_initialisation, 5000, 10, 60,'/Users/finnkane/Desktop/ICR/plots/cnLOH/Hist/ss_cnLOH_hist_tau=10')
+diploid_to_cnLOH_hist(mu, gamma, ss_initialisation, 5000, 50, 60,'/Users/finnkane/Desktop/ICR/plots/cnLOH/Hist/ss_cnLOH_hist_tau=50')
 
 # diploid_to_cnLOH_hist(mu, gamma, state_initialisation, 1000, 10, 60,'/Users/finnkane/Desktop/ICR/plots/cnLOH/Hist/cnLOH_hist_tau=10')
 # diploid_to_cnLOH_hist(mu, gamma, state_initialisation, 1000, 50, 60,'/Users/finnkane/Desktop/ICR/plots/cnLOH/Hist/cnLOH_hist_tau=50')

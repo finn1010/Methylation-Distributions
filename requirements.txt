@@ -1,5 +1,7 @@
-numpy=2.1.1
-scipy=1.13.1
-matplotlib=3.9.2 
-arviz=0.20.0
-cmdstanpy=1.2.4
+arviz==0.20.0
+cmdstanpy==1.2.4
+matplotlib==3.9.3
+numpy==2.2.0
+pandas==2.2.3
+scipy==1.14.1
+seaborn==0.13.2

@@ -34,7 +34,7 @@ def calc_dt_trisomy(mu, gamma):
   
 
 def tri_dt(start_evoln, end_evoln, dt_max):
-    n = int((end_evoln-start_evoln) / dt_max) + 2  # Number of time steps.
+    n = int((end_evoln-start_evoln) / dt_max)  # Number of time steps.
     t = np.linspace(start_evoln, end_evoln, n) 
     dt = t[1] - t[0]
     return dt

@@ -56,7 +56,7 @@ def calc_dt_max_diploid(mu, gamma):
     return dt_max 
 
 def diploid_dt(start_evoln, end_evoln, dt_max):
-    n = int((end_evoln-start_evoln) / dt_max) + 2  
+    n = int((end_evoln-start_evoln) / dt_max) 
     t = np.linspace(start_evoln, end_evoln, n) 
     dt = t[1] - t[0]
     return dt
@@ -116,9 +116,52 @@ def state_simulation(initial_state, mu, gamma, dt):
     
 #     return final_states
 
+# def run_simulation_diploid(mu, gamma, init_fn, num_sites=100, start_evoln=0, end_evoln=10, initial_state=None):
+#     """
+#     Simulates the evolution of diploid states over time.
+
+#     Args:
+#         mu (float): Mutation rate.
+#         gamma (float): Conversion rate.
+#         init_fn (callable): Function to initialize states.
+#         num_sites (int): Number of sites to simulate (default=100).
+#         start_evoln (float): Start time of evolution (default=0).
+#         end_evoln (float): End time of evolution (default=10).
+#         initial_state (list): Initial state for the simulation (default=None).
+
+#     Returns:
+#         list: Final states of the simulation.
+#     """
+#     states = []
+#     final_states = []
+#     dt_max = calc_dt_max_diploid(mu, gamma)
+#     dt = diploid_dt(start_evoln, end_evoln, dt_max)
+
+#     if initial_state is None:
+#         for _ in range(num_sites):
+#             current_state = init_fn(mu, gamma) if init_fn.__code__.co_argcount > 0 else init_fn()
+#             counter = 0
+#             for _ in range(int((end_evoln - start_evoln)/ dt) + 1):
+#                 current_state = state_simulation(current_state, mu, gamma, dt)
+#                 counter += dt
+#                 states.append(current_state)
+#             final_states.append(states[-1])
+
+#     else:
+#         current_state = initial_state
+#         counter=0
+#         for _ in range(int((end_evoln - start_evoln)/ dt) + 1):
+#             current_state = state_simulation(current_state, mu, gamma, dt)
+#             states.append(current_state)
+#             counter += dt
+#         final_states.append(states[-1])
+
+#     print(counter)
+
+    # return final_states
 def run_simulation_diploid(mu, gamma, init_fn, num_sites=100, start_evoln=0, end_evoln=10, initial_state=None):
     """
-    Simulates the evolution of diploid states over time.
+    Simulates the evolution of diploid states over time and saves results to a file.
 
     Args:
         mu (float): Mutation rate.
@@ -128,31 +171,42 @@ def run_simulation_diploid(mu, gamma, init_fn, num_sites=100, start_evoln=0, end
         start_evoln (float): Start time of evolution (default=0).
         end_evoln (float): End time of evolution (default=10).
         initial_state (list): Initial state for the simulation (default=None).
+        output_file (str): Name of the output file (default="simulation_results.txt").
 
     Returns:
         list: Final states of the simulation.
     """
+    c = []
     states = []
     final_states = []
     dt_max = calc_dt_max_diploid(mu, gamma)
     dt = diploid_dt(start_evoln, end_evoln, dt_max)
+    output_file="simulation_results.txt"
+    with open(output_file, "w") as f:
+        if initial_state is None:
+            for _ in range(num_sites):
+                current_state = init_fn(mu, gamma) if init_fn.__code__.co_argcount > 0 else init_fn()
+                counter = 0
+                for _ in range(int((end_evoln - start_evoln) / dt) + 1):
+                    current_state = state_simulation(current_state, mu, gamma, dt)
+                    counter += dt
+                    
+                    states.append(current_state)
+                final_states.append(states[-1])
+                # f.write(f"Site {_}: Final State: {states[-1]}\n")
 
-    if initial_state is None:
-        for _ in range(num_sites):
-            current_state = init_fn(mu, gamma) if init_fn.__code__.co_argcount > 0 else init_fn()
-            for _ in range(int(end_evoln / dt) + 1):
+        else:
+            current_state = initial_state
+            counter = 0
+            for _ in range(int((end_evoln - start_evoln) / dt) + 1):
                 current_state = state_simulation(current_state, mu, gamma, dt)
                 states.append(current_state)
+                counter += dt
             final_states.append(states[-1])
-    else:
-        current_state = initial_state
-        for _ in range(int(end_evoln / dt) + 1):
-            current_state = state_simulation(current_state, mu, gamma, dt)
-            states.append(current_state)
-        final_states.append(states[-1])
+            # f.write(f"Initial Site: Final State: {states[-1]}\n")
 
+        f.write(f"{counter}")
     return final_states
-
 def diploid_beta_vals(states):
     beta_vals = [(state[1] + 2 * state[0]) / 2 for state in states]
     return beta_vals

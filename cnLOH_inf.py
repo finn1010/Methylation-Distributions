@@ -66,7 +66,7 @@ def diploid_to_cnLOH(mu, gamma, init_fn, num_sites, event_time, patient_age):
     beta_vals_after.append(diploid_beta_vals(cnLOH_state_list))
     beta_vals_after1 = np.array(beta_vals_after)
     for beta_val in beta_vals_after1:
-        noisy_beta_after = add_noise(beta_val, 0.3,0.7,1)
+        noisy_beta_after = add_noise(beta_val, 0.05,0.95,30)
 
     return noisy_beta_before, noisy_beta_after
 
