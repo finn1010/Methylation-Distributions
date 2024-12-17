@@ -32,13 +32,13 @@ functions {
  //   return P * initial_state;
  // }
 
-vector diploid_prob(real t, vector initial_state, real gamma, real mu) {
+  vector diploid_prob(real t, vector initial_state, real gamma, real mu) {
     matrix[3, 3] R = rate_matrix(gamma, mu);
     matrix[3, 1] initial_state_matrix;
     initial_state_matrix[, 1] = initial_state;
     matrix [3,1] F = scale_matrix_exp_multiply(t,R,initial_state_matrix);
     return to_vector(F);
-  }
+    }
   vector cnLOH_event_prob(vector probabilities) {
     // Extract final diploid probabilities
     real m_prob = probabilities[1];
@@ -66,6 +66,8 @@ data{
     int<lower=0> N;                 //num sites
     array[N] real<lower=0,upper=1> y;    //observed beta values
     int<lower=0> age;
+//ragged array for different sets of y values stan docs and carbine examples
+// loop through no of patients and no of events
 
 
 }
@@ -136,6 +138,3 @@ model {
     }
 }
 
-
-// check: theta/cahce theta calculation 
-//and also check mu - in calculations 

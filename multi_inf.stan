@@ -24,7 +24,7 @@ functions {
         R[3, 2] = gamma;
         R[3, 3] = -2 * mu;
 
-        return R;  // Missing closing bracket fixed
+        return R;  
     }
     
     matrix tri_rate_matrix(real mu, real gamma) {
@@ -224,6 +224,7 @@ data{
     int<lower=0> age;
     int<lower=1,upper=6> type;
 }
+
 transformed data {
     ordered[K+1] position;
 
@@ -245,7 +246,6 @@ transformed data {
     }
 
     real rand_val = uniform_rng(0, 1);
-
 }
 
 
@@ -343,7 +343,3 @@ generated quantities {
     }
 }
 
-
-
-// check: theta/cahce theta calculation 
-//and also check mu - in calculations 

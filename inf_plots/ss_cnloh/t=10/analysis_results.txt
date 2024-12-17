@@ -1,0 +1,4 @@
+Credible Interval Coverage: 57.98%
+Variance of Observed Data: 0.1100
+Variance of Posterior Predictive: 0.1065
+Variance Ratio (Posterior/Observed): 0.97

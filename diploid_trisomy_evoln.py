@@ -57,7 +57,7 @@ def diploid_to_trisomy_hist(mu, gamma, init_fn, num_sites, event_time, patient_a
     beta_vals_before1 = np.array(beta_vals_before)
 
     for beta_val in beta_vals_before1:
-        noisy_beta_before = add_noise(beta_val, 0.9,0.95,30)
+        noisy_beta_before = add_noise(beta_val, 0.05,0.95,30)
 
     trisomy_state_list = []
     for state in final_diploid_states:
