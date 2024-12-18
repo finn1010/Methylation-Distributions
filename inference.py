@@ -15,10 +15,10 @@ patient_age = 60
 type = 6
 
 
+
 if type == 1:
     noisy_beta_before, noisy_beta_after = diploid_to_cnLOH(mu, gamma, ss_initialisation, num_sites, event_time, patient_age)
     K = 2
-    
     prefix = f'/Users/finnkane/Desktop/ICR/inf_plots/ss_cnloh/t={event_time}/'
 elif type == 2:
     noisy_beta_before, noisy_beta_after = diploid_to_trisomy(mu, gamma, ss_initialisation, num_sites, event_time, patient_age)
@@ -44,6 +44,7 @@ elif type == 6:
 # Compile and sample from the Stan model
 model = cmdstanpy.CmdStanModel(stan_file='multi_inf.stan')
 data = {
+    'J': J,
     'K': K, 
     'N': num_sites, 
     'y': noisy_beta_after,  

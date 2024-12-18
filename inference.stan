@@ -62,15 +62,18 @@ functions {
 }
 
 data{
-    int<lower=1> K;                  //number of mixture components
-    int<lower=0> N;                 //num sites
-    array[N] real<lower=0,upper=1> y;    //observed beta values
-    int<lower=0> age;
+    int<lower=1> K;                        //number of mixture components
+    int<lower=0> J;                        //number of patients
+    int<lower=0> N;                        //num sites
+    array[N] real<lower=0,upper=1> y;     //observed beta values
+    int<lower=0> age[J];                     //patient age
+    array[J] int n;                       //number of sites for each patient
+    int<lower=1,upper=6> type;
+}
 //ragged array for different sets of y values stan docs and carbine examples
 // loop through no of patients and no of events
 
 
-}
 transformed data {
     ordered[3] position;
     position[1] = 0.0;
@@ -108,13 +111,10 @@ transformed parameters{
     }
     
     vector[K+1] initial_state = ss_init_prob(mu, gamma);
-    //vector[K+1] state_probs = diploid_prob((t), initial_state, gamma, mu);
     vector[K+1] post_cnLOH_state_probs = cnLOH_event_prob(initial_state);
     vector[K+1] altered_state_probs = diploid_prob((age-t), post_cnLOH_state_probs, gamma, mu);
     cache_theta = altered_state_probs;
-    if (abs(sum(cache_theta)-1) > 1e-3){
-        reject("abs confirmed mu: ", mu, " gamma: ", gamma, " t: ", t);
-    }
+
 }
 
 model {

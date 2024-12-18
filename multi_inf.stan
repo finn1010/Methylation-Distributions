@@ -219,9 +219,11 @@ functions {
 
 data{
     int<lower=1> K;                        //number of mixture components
-    int<lower=0> N;                        //num sites
-    array[N] real<lower=0,upper=1> y;     //observed beta values
-    int<lower=0> age;
+    int<lower=0> J;                        //number of patients
+    //int<lower=0> N;                        //num sites
+    array[J] int<lower=0> n;                       //number of sites for each patient
+    array[sum(n)] real<lower=0,upper=1> y;     //observed beta values
+    array[J] int<lower=0> age;                 //patient age
     int<lower=1,upper=6> type;
 }
 
@@ -245,6 +247,12 @@ transformed data {
         position[5] = 1.0;
     }
 
+    array[J+1] int start_idx;
+
+    start_idx[1] = 1; 
+    for (j in 1:J) {
+        start_idx[j+1] = start_idx[j] + n[j];
+    }
     real rand_val = uniform_rng(0, 1);
 }
 
@@ -254,51 +262,55 @@ parameters{
     real<lower=0> kappa;                //standard deviation of peak
     real<lower=0> mu;                   //methylation rate
     real<lower=0> gamma;                //demethylation rate
-    real<lower=0,upper=age> t;          //CNA time
-    real<lower=0,upper=1> eta;          //Beta dist parameter
-    real<lower=0,upper=1> delta;        //Beta dist parameter
+    array[J] real<lower=0> t;          //CNA time - add upper bound
+    array[J] real<lower=0,upper=1> eta;          //Beta dist parameter
+    array[J] real<lower=0,upper=1> delta;        //Beta dist parameter
 
 }
 
 transformed parameters {
-    array[K+1] real<lower=0> a;  // Beta distribution shape parameter a
-    array[K+1] real<lower=0> b;  // Beta distribution shape parameter b
-    array[K+1] real pos_obs;
-    vector[K+1] cache_theta;
+    array[J, K+1] real<lower=0> a;  // Beta distribution shape parameter a
+    array[J, K+1] real<lower=0> b;  // Beta distribution shape parameter b
+    array[J] vector[K+1] cache_theta;
     
 
-    for (i in 1:K+1) {
-        pos_obs[i] = (eta - delta) * position[i] + delta;
-    }
-
-    for (i in 1:K+1) {
-        a[i] = kappa * pos_obs[i]; 
-        b[i] = kappa * (1 - pos_obs[i]);
-    }
-    vector[3] initial_state;
-
-    if (type==4 || type==5 || type==6){
 
 
-        if (rand_val > 0.5) {
-            initial_state = [1, 0, 0]';
-        } else {
-            initial_state = [0, 0, 1]';
+    //loop through patients and sites
+
+    for (j in 1:J){
+
+        vector[3] initial_state;
+        vector[K+1] pos_obs; 
+        if (type==4 || type==5 || type==6){
+
+
+            if (rand_val > 0.5) {
+                initial_state = [1, 0, 0]';
+            } else {
+                initial_state = [0, 0, 1]';
+            }
         }
-    }
 
-    if (type == 1) {
-        cache_theta = ss_cnloh_evln(t, age, mu, gamma);
-    } else if (type == 2) {
-        cache_theta = ss_tri_evln(t, age, mu, gamma);
-    } else if (type == 3) {
-        cache_theta = ss_tet_evln(t, age, mu, gamma);
-    } else if (type == 4) {
-        cache_theta = dip_cnloh_evln(t, age, mu, gamma, initial_state);
-    } else if (type == 5) {
-        cache_theta = dip_tri_evln(t, age, mu, gamma, initial_state);
-    } else if (type == 6) {
-        cache_theta = dip_tet_evln(t, age, mu, gamma, initial_state);
+        for (i in 1:K+1) {
+            pos_obs[i] = (eta[j] - delta[j]) * position[i] + delta[j];
+            a[j,i] = kappa * pos_obs[i]; 
+            b[j,i] = kappa * (1 - pos_obs[i]);
+        }
+
+        if (type == 1) {
+            cache_theta[j] = ss_cnloh_evln(t[j], age[j], mu, gamma);
+        } else if (type == 2) {
+            cache_theta[j] = ss_tri_evln(t[j], age[j], mu, gamma);
+        } else if (type == 3) {
+            cache_theta[j] = ss_tet_evln(t[j], age[j], mu, gamma);
+        } else if (type == 4) {
+            cache_theta[j] = dip_cnloh_evln(t[j], age[j], mu, gamma, initial_state);
+        } else if (type == 5) {
+            cache_theta[j] = dip_tri_evln(t[j], age[j], mu, gamma, initial_state);
+        } else if (type == 6) {
+            cache_theta[j] = dip_tet_evln(t[j], age[j], mu, gamma, initial_state);
+        }
     }
 }
 
@@ -313,33 +325,21 @@ model {
   //  rand_val ~ uniform(0, 1);
 
 
-    // Likelihood
-    for (n in 1:N) {
-        vector[K+1] log_likelihood = log(cache_theta);
-        
-        for (k in 1:K+1) {
-            log_likelihood[k] += beta_lpdf(y[n] | a[k], b[k]); // Beta log-density
+
+    for (j in 1:J) {
+        delta[j] ~ beta(5, 95);
+        eta[j] ~ beta(95, 5);
+
+        for (i in start_idx[j]:(start_idx[j+1] - 1)) {
+            vector[K+1] log_likelihood = log(cache_theta[j]);
+
+            for (k in 1:K+1) {
+                log_likelihood[k] += beta_lpdf(y[i] | a[j, k], b[j, k]);
+            }
+
+            target += log_sum_exp(log_likelihood);
         }
-        target += log_sum_exp(log_likelihood); // Log mixture likelihood
     }
 }
-generated quantities {
-    vector[N] y_rep;              // Replicated data
-    vector[N] log_lik;            // Log-likelihood for diagnostics
-    
-    for (n in 1:N) {
-        vector[K+1] log_likelihood = log(cache_theta);  // Log mixture weights
-        
-        for (k in 1:K+1) {
-            log_likelihood[k] += beta_lpdf(y[n] | a[k], b[k]);  // Log mixture density
-        }
-        
-        // Store log-likelihood for model checking
-        log_lik[n] = log_sum_exp(log_likelihood);
-        
-        // Posterior predictive simulation
-        int k_sim = categorical_rng(softmax(log_likelihood));  // Sample component
-        y_rep[n] = beta_rng(a[k_sim], b[k_sim]);              // Simulated y value
-    }
-}
+
 
