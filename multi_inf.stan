@@ -253,7 +253,7 @@ transformed data {
     for (j in 1:J) {
         start_idx[j+1] = start_idx[j] + n[j];
     }
-    real rand_val = uniform_rng(0, 1);
+   // real rand_val = uniform_rng(0, 1);
 }
 
 
@@ -261,10 +261,12 @@ parameters{
             //mixture weights
     real<lower=0> kappa;                //standard deviation of peak
     real<lower=0> mu;                   //methylation rate
-    real<lower=0> gamma;                //demethylation rate
+    //real<lower=0> gamma;                //demethylation rate
     array[J] real<lower=0> t;          //CNA time - add upper bound
     array[J] real<lower=0,upper=1> eta;          //Beta dist parameter
     array[J] real<lower=0,upper=1> delta;        //Beta dist parameter
+    real<lower=0> gamma_raw;
+    array[J] real<lower=0,upper=1> init_probs;
 
 }
 
@@ -272,9 +274,9 @@ transformed parameters {
     array[J, K+1] real<lower=0> a;  // Beta distribution shape parameter a
     array[J, K+1] real<lower=0> b;  // Beta distribution shape parameter b
     array[J] vector[K+1] cache_theta;
-    
 
 
+    real<lower=0> gamma = gamma_raw * mu;
 
     //loop through patients and sites
 
@@ -282,10 +284,8 @@ transformed parameters {
 
         vector[3] initial_state;
         vector[K+1] pos_obs; 
-        if (type==4 || type==5 || type==6){
-
-
-            if (rand_val > 0.5) {
+        if (type==4 || type==5 || type==6) {
+            if (init_probs[j] > 0.5) {
                 initial_state = [1, 0, 0]';
             } else {
                 initial_state = [0, 0, 1]';
@@ -318,15 +318,14 @@ model {
     // Priors
     // theta and CNA time are flat priors
     kappa ~ lognormal(3.6, 0.5);       
-    delta ~ beta(5,95);
-    eta ~ beta(95,5);
     mu ~ normal(0,0.05);
-    gamma ~ normal(0,0.05);
+    gamma ~ normal(0,0.5);
   //  rand_val ~ uniform(0, 1);
-
-
+   // gamma_raw ~ normal(1, 0.5);
+  
 
     for (j in 1:J) {
+        init_probs[j] ~ uniform(0, 1);
         delta[j] ~ beta(5, 95);
         eta[j] ~ beta(95, 5);
 

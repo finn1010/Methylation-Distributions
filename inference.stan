@@ -111,6 +111,7 @@ transformed parameters{
     }
     
     vector[K+1] initial_state = ss_init_prob(mu, gamma);
+    //vector[K+1] state_probs = diploid_prob((t), initial_state, gamma, mu);
     vector[K+1] post_cnLOH_state_probs = cnLOH_event_prob(initial_state);
     vector[K+1] altered_state_probs = diploid_prob((age-t), post_cnLOH_state_probs, gamma, mu);
     cache_theta = altered_state_probs;
@@ -124,7 +125,7 @@ model {
     delta ~ beta(5,95);
     eta ~ beta(95,5);
     mu ~ normal(0,0.05);
-    gamma ~ normal(0,0.05);
+    gamma ~ normal(0,0.5);
 
 
     // Likelihood

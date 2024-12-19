@@ -10,10 +10,8 @@ import numpy as np
 mu = 0.02
 gamma = 0.02    
 
-event_time = 50
-patient_age = 60
 type = 1
-J = 7
+J = 4
 num_sites = np.random.uniform(50, 200, size=J).astype(int)
 patient_ages = np.random.uniform(40, 80, size=J).astype(int)
 event_times = []
@@ -30,8 +28,34 @@ if type == 1:
         noisy_beta_before, noisy_beta_after = diploid_to_cnLOH(mu, gamma, ss_initialisation, num_sites[i], event_times[i], patient_ages[i])
         vals.append(noisy_beta_after)
         K=2
+    # prefix = f'/Users/finnkane/Desktop/ICR/inf_plots/ss_cnloh/t={event_time}/'
+elif type == 2:
+    for i in range(len(patient_ages)):
+        noisy_beta_before, noisy_beta_after = diploid_to_trisomy(mu, gamma, ss_initialisation, num_sites[i], event_times[i], patient_ages[i])
+        K = 3
+    # prefix = f'/Users/finnkane/Desktop/ICR/inf_plots/ss_tri/t={event_time}/'
+elif type == 3:
+    for i in range(len(patient_ages)):
+        noisy_beta_before, noisy_beta_after = diploid_to_tetraploidy(mu, gamma, ss_initialisation, num_sites[i], event_times[i], patient_ages[i])
+        K = 4
+    # prefix = f'/Users/finnkane/Desktop/ICR/inf_plots/ss_tet/t={event_time}/'
+elif type == 4:
+    for i in range(len(patient_ages)):
+        noisy_beta_before, noisy_beta_after = diploid_to_cnLOH(mu, gamma, state_initialisation, num_sites[i], event_times[i], patient_ages[i])
+        K = 2
+    # prefix = f'/Users/finnkane/Desktop/ICR/inf_plots/dip_cnloh/t={event_time}/'
+elif type == 5:
+    for i in range(len(patient_ages)):
+        noisy_beta_before, noisy_beta_after = diploid_to_trisomy(mu, gamma, state_initialisation, num_sites[i], event_times[i], patient_ages[i])
+        K = 3
+    # prefix = f'/Users/finnkane/Desktop/ICR/inf_plots/dip_tri/t={event_time}/'
+elif type == 6:
+    for i in range(len(patient_ages)):
+        noisy_beta_before, noisy_beta_after = diploid_to_tetraploidy(mu, gamma, state_initialisation, num_sites[i], event_times[i], patient_ages[i])
+        K = 4
+    # prefix = f'/Users/finnkane/Desktop/ICR/inf_plots/dip_tet/t={event_time}/'
+
 vals = np.concatenate(vals)
-print(vals)
 
 model = cmdstanpy.CmdStanModel(stan_file='multi_inf.stan')
 data = {
@@ -57,10 +81,10 @@ print(event_times)
 # noisy_beta_before, noisy_beta_after = diploid_to_cnLOH(mu, gamma, ss_initialisation, num_sites, event_time, patient_age)
 # print(len(noisy_beta_after))
 idata = az.from_cmdstanpy(fit)
-az.summary(idata, var_names=['mu', 'gamma', 't'])
+az.summary(idata, var_names=['mu', 'gamma','t'])
 az.plot_pair(
     idata,
-    var_names=["mu", "gamma","t"], 
+    var_names=["mu", "gamma", "t"], 
     divergences=True,
 )
 plt.savefig(f'cccc.pdf', format='pdf', dpi=300)
