@@ -46,7 +46,8 @@ model = cmdstanpy.CmdStanModel(stan_file='multi_inf.stan')
 data = {
     'K': K, 
     'N': num_sites, 
-    'y': noisy_beta_after,  
+    'y': noisy_beta_after,
+      
     'age': patient_age,
     'type': type
 }

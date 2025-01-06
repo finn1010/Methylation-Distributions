@@ -42,9 +42,8 @@ elif type == 6:
     prefix = f'/Users/finnkane/Desktop/ICR/inf_plots/dip_tet/t={event_time}/'
 
 # Compile and sample from the Stan model
-model = cmdstanpy.CmdStanModel(stan_file='multi_inf.stan')
+model = cmdstanpy.CmdStanModel(stan_file='multi_inf0.stan')
 data = {
-    'J': J,
     'K': K, 
     'N': num_sites, 
     'y': noisy_beta_after,  

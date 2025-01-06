@@ -66,7 +66,7 @@ data{
     int<lower=0> J;                        //number of patients
     int<lower=0> N;                        //num sites
     array[N] real<lower=0,upper=1> y;     //observed beta values
-    int<lower=0> age[J];                     //patient age
+ //   int<lower=0> age[J];                     //patient age
     array[J] int n;                       //number of sites for each patient
     int<lower=1,upper=6> type;
 }

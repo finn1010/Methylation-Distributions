@@ -6,20 +6,26 @@ from cnLOH_inf import diploid_to_cnLOH
 from tri_inf import diploid_to_trisomy
 from tet_inf import diploid_to_tetraploidy
 import numpy as np
+import pandas as pd
+from plot import hist_plot
+from trial_dip import cnloh_sim
+
+# num_sites = np.random.uniform(50, 200, size=J).astype(int)
+# patient_ages = np.random.uniform(60, 80, size=J).astype(int)
+# event_times=[]
+# for patient in patient_ages:
+#     event_times.append(np.random.uniform(10, patient-10))
+
+
 # Model parameters
 mu = 0.02
 gamma = 0.02    
+type = 4
+event_times = [10,60]
+J=2
+num_sites=[400,400]
+patient_ages=[40,80]
 
-type = 1
-J = 4
-num_sites = np.random.uniform(50, 200, size=J).astype(int)
-patient_ages = np.random.uniform(40, 80, size=J).astype(int)
-event_times = []
-for patient in patient_ages:
-    event_times.append(np.random.uniform(10, patient-10))
-
-# print(num_sites)
-# print(patient_ages-event_times)
 
 
 vals = []
@@ -41,12 +47,18 @@ elif type == 3:
     # prefix = f'/Users/finnkane/Desktop/ICR/inf_plots/ss_tet/t={event_time}/'
 elif type == 4:
     for i in range(len(patient_ages)):
+        noisy_beta_after1 = cnloh_sim([0.5,0,0.5], mu, gamma, patient_ages[i], event_times[i], num_sites[i])
         noisy_beta_before, noisy_beta_after = diploid_to_cnLOH(mu, gamma, state_initialisation, num_sites[i], event_times[i], patient_ages[i])
+        vals.append(noisy_beta_after1)
+        # hist_plot(noisy_beta_before, noisy_beta_after,'Diploid', event_times[i], patient_ages[i]-event_times[i], 'e.png')
+        # hist_plot(noisy_beta_after1, noisy_beta_after1,'Diploid', event_times[i], patient_ages[i]-event_times[i], 'e.png')
+
         K = 2
     # prefix = f'/Users/finnkane/Desktop/ICR/inf_plots/dip_cnloh/t={event_time}/'
 elif type == 5:
     for i in range(len(patient_ages)):
         noisy_beta_before, noisy_beta_after = diploid_to_trisomy(mu, gamma, state_initialisation, num_sites[i], event_times[i], patient_ages[i])
+        vals.append(noisy_beta_after)
         K = 3
     # prefix = f'/Users/finnkane/Desktop/ICR/inf_plots/dip_tri/t={event_time}/'
 elif type == 6:
@@ -67,41 +79,84 @@ data = {
     'type': type
 }
 
-fit = model.sample(data=data, show_console=True)
-import pandas as pd
-# Ensure all rows and columns are displayed
-with pd.option_context('display.max_rows', None, 'display.max_columns', None):
-    print(fit.summary())
+init_values = [{'t': np.random.uniform(5, 70, size=J).tolist()} for _ in range(4)]
 
-# Print event times
+fit = model.sample(
+    data=data,
+    adapt_delta=0.8,
+    max_treedepth=12,
+    inits=init_values,
+    show_console=False
+)
+summary_df = fit.summary()
+
+filtered_summary = summary_df[~summary_df.index.str.contains("log_lik|y_rep|cache_theta")]
+print(filtered_summary)
+
+
+
 print(event_times)
-
 #         K = 2
         # prefix = f'/Users/finnkane/Desktop/ICR/inf_plots/ss_cnloh/t={event_time}/'
 # noisy_beta_before, noisy_beta_after = diploid_to_cnLOH(mu, gamma, ss_initialisation, num_sites, event_time, patient_age)
 # print(len(noisy_beta_after))
-idata = az.from_cmdstanpy(fit)
-az.summary(idata, var_names=['mu', 'gamma','t'])
+divergences = fit.diagnose()
+print(divergences)
+# idata = az.from_cmdstanpy(
+#     posterior=fit,
+#     posterior_predictive="y_rep",
+#     observed_data={"y": data["y"]}
+# )
+# az.summary(idata, var_names=['mu', 'gamma','t'])
+#
+az_fit = az.from_cmdstanpy(
+    fit,
+    posterior_predictive="y_rep",  # No brackets here
+    observed_data={"y": vals}      # Use the same data as in `data`
+)
+
 az.plot_pair(
-    idata,
-    var_names=["mu", "gamma", "t"], 
+    az_fit,
+    var_names=["mu", "gamma_raw", "t"], 
     divergences=True,
 )
-plt.savefig(f'cccc.pdf', format='pdf', dpi=300)
-
-
-
-# Check specific parameters with divergences
-az.plot_trace(idata, var_names=["mu", "gamma", "t"], divergences='top', combined=True)
+az.plot_trace(
+    az_fit, 
+    var_names=["mu", "gamma_raw", "t"], 
+    divergences='top', 
+    combined=True)
 plt.show()
-print(event_times)
+
+y_rep_flat = az_fit.posterior_predictive["y_rep"].stack(samples=("chain", "draw"))
+print(y_rep_flat.shape)
+
+print(az_fit.posterior_predictive.keys())
+print(f"Observed data shape: {np.shape(vals)}")
+print(f"Posterior predictive shape: {az_fit.posterior_predictive['y_rep'].shape}")
+
+az_fit.posterior_predictive["y_rep"] = y_rep_flat
+
+az.plot_ppc(
+    data=az_fit,
+    data_pairs={"y": "y_rep"}
+)
+plt.show()
+
+# plt.savefig(f'cccc.pdf', format='pdf', dpi=300)
+# az.plot_ppc(az_fit, var_names=["y_rep"])
+
+# az.plot_autocorr(fit)
+
+# print(event_times)
+# # Check specific parameters with divergences
+
 # az_fit = az.from_cmdstanpy(fit, posterior_predictive=['y_rep'], observed_data={'y': vals})
 
 # # Plot diagnostics
-# az.plot_posterior(az_fit, var_names=["mu", "gamma", "t"])
-# plt.title('Posterior Estimates')
-# # plt.savefig(f'{prefix}posterior.pdf', format='pdf', dpi=300)
-# plt.show()
+az.plot_posterior(az_fit, var_names=["mu", "gamma", "t_raw"])
+plt.title('Posterior Estimates')
+# plt.savefig(f'{prefix}posterior.pdf', format='pdf', dpi=300)
+plt.show()
 
 # az.plot_forest(az_fit, var_names=["t"], combined=False)
 # plt.title('Forest Plot of Posterior Estimates for t')
@@ -113,9 +168,9 @@ print(event_times)
 # # plt.savefig(f'{prefix}forest.pdf', format='pdf', dpi=300)
 # plt.show()
 
-# az.plot_pair(az_fit, var_names=["mu", "gamma", "t"])
+# az.plot_pair(az_fit, var_names=["mu", "gamma_raw", "t"])
 # plt.title('Pair Plot of Posterior Estimates')
-# plt.savefig(f'{prefix}pair_plot.pdf', format='pdf', dpi=300)
+# # plt.savefig(f'{prefix}pair_plot.pdf', format='pdf', dpi=300)
 # plt.show()
 
 # az.plot_trace(az_fit, var_names=["mu", "gamma", "t"], combined=True)

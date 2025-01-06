@@ -1,0 +1,383 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats, linalg
+
+from state_evolve.diploid_evolution import run_simulation_diploid, diploid_beta_vals, diploid_prob_matrix, state_initialisation, ss_initialisation, ss_init_prob
+from state_evolve.trisomy_evolution import run_simulation_trisomy, trisomy_beta_vals, trisomy_prob_matrix
+from state_evolve.trisomy_event import trisomy_event, trisomy_event_prob
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats, linalg
+
+from state_evolve.diploid_evolution import run_simulation_diploid, diploid_beta_vals, diploid_prob_matrix, state_initialisation, ss_initialisation, ss_init_prob
+from state_evolve.trisomy_evolution import run_simulation_trisomy, trisomy_beta_vals, trisomy_prob_matrix
+from state_evolve.trisomy_event import trisomy_event, trisomy_event_prob
+from plot import hist_plot, plot_prob_dist
+from colours import pallet_dip, pallet_tri
+              
+              
+from scipy import linalg
+import numpy as np
+
+def state_initialisation():
+    rng = np.random.default_rng()
+    m = [1,0,0]
+    w = [0,0,1]
+    if rng.random() > 0.5:
+        state = m
+    else:
+        state = w
+    return state
+
+def ss_initialisation(mu, gamma):
+    prob = [
+    gamma ** 2 / (mu + gamma) ** 2, 
+    2 * mu * gamma / (mu + gamma) ** 2, 
+    mu ** 2 / (mu + gamma) ** 2
+    ]
+
+    states = [
+    [1, 0, 0], 
+    [0, 1, 0],  
+    [0, 0, 1]   
+    ]
+    
+    rng = np.random.default_rng()
+    state = rng.choice(states, p=prob)
+    
+    return state
+
+def ss_init_prob(mu,gamma):
+    return [
+    gamma ** 2 / (mu + gamma) ** 2, 
+    2 * mu * gamma / (mu + gamma) ** 2, 
+    mu ** 2 / (mu + gamma) ** 2
+    ]
+
+
+
+def diploid_prob_matrix(initial_state, mu, gamma, time_points):
+    RateMatrix = np.array([[-2*gamma, mu, 0], 
+                                [2*gamma, -(gamma + mu), 2*mu], 
+                                [0, gamma, -2*mu]])
+
+    Probabilities = np.array([linalg.expm(RateMatrix * t) @ initial_state / np.sum(initial_state) 
+                            for t in time_points])
+    return Probabilities
+
+
+def calc_dt_max_diploid(mu, gamma):
+    dt_max = 0.1 / np.max((
+    2*mu, 
+    2*gamma)
+    )
+    return dt_max 
+
+def diploid_dt(start_evoln, end_evoln, dt_max):
+    n = int((end_evoln-start_evoln) / dt_max) 
+    t = np.linspace(start_evoln, end_evoln, n) 
+    dt = t[1] - t[0]
+    return dt
+
+
+def state_simulation(initial_state, mu, gamma, dt):
+    rng = np.random.default_rng()
+    m,k,w = initial_state
+    
+    p_m_to_k = 2 * gamma * dt 
+    p_k_to_m = mu * dt        
+    p_k_to_w = gamma * dt      
+    p_w_to_k = 2 * mu * dt   
+
+    if m == 1:
+        if rng.random() < p_m_to_k:
+            m, k, w = 0, 1, 0  
+
+    elif k == 1:
+        rand_val = rng.random()
+        if rand_val < p_k_to_m:
+            m, k, w = 1, 0, 0  
+            
+        elif rand_val < p_k_to_w + p_k_to_m:
+            m, k, w = 0, 0, 1  
+
+        else:
+            m, k, w = 0, 1, 0
+
+    elif w == 1:
+        if rng.random() < p_w_to_k:
+            m, k, w = 0, 1, 0  
+
+    return [m, k, w]
+
+def run_simulation_diploid(mu, gamma, init_fn, num_sites=100, start_evoln=0, end_evoln=10, initial_state=None):
+    """
+    Simulates the evolution of diploid states over time and saves results to a file.
+
+    Args:
+        mu (float): Mutation rate.
+        gamma (float): Conversion rate.
+        init_fn (callable): Function to initialize states.
+        num_sites (int): Number of sites to simulate (default=100).
+        start_evoln (float): Start time of evolution (default=0).
+        end_evoln (float): End time of evolution (default=10).
+        initial_state (list): Initial state for the simulation (default=None).
+        output_file (str): Name of the output file (default="simulation_results.txt").
+
+    Returns:
+        list: Final states of the simulation.
+    """
+    c = []
+    states = []
+    final_states = []
+    dt_max = calc_dt_max_diploid(mu, gamma)
+    dt = diploid_dt(start_evoln, end_evoln, dt_max)
+    output_file="simulation_results.txt"
+    with open(output_file, "w") as f:
+        if initial_state is None:
+            for _ in range(num_sites):
+                current_state = init_fn(mu, gamma) if init_fn.__code__.co_argcount > 0 else init_fn()
+                counter = 0
+                for _ in range(int((end_evoln - start_evoln) / dt) + 1):
+                    current_state = state_simulation(current_state, mu, gamma, dt)
+                    counter += dt
+                    
+                    states.append(current_state)
+                final_states.append(states[-1])
+                # f.write(f"Site {_}: Final State: {states[-1]}\n")
+
+        else:
+            current_state = initial_state
+            counter = 0
+            for _ in range(int((end_evoln - start_evoln) / dt) + 1):
+                current_state = state_simulation(current_state, mu, gamma, dt)
+                states.append(current_state)
+                counter += dt
+            final_states.append(states[-1])
+            # f.write(f"Initial Site: Final State: {states[-1]}\n")
+
+        f.write(f"{counter}")
+    return final_states
+def diploid_beta_vals(states):
+    beta_vals = [(state[1] + 2 * state[0]) / 2 for state in states]
+    return beta_vals
+
+    import numpy as np
+
+def trisomy_event(mkw):
+    rng = np.random.default_rng()  
+    m_cancer, k_cancer, w_cancer = mkw
+    u_cancer, d_cancer = 0, 0
+    if k_cancer == 1:
+        if rng.random() < 0.5:
+            u_cancer = 1
+        else:
+            d_cancer = 1
+    mudw = np.array([m_cancer, u_cancer, d_cancer, w_cancer])
+
+    return mudw
+
+def trisomy_event_prob(probabilities):
+    final_diploid_probs = probabilities[-1]
+    m_prob, k_prob, w_prob = final_diploid_probs
+    u_prob = d_prob = k_prob / 2
+    initial_trisomy_probs = [m_prob, u_prob, d_prob, w_prob]
+    return initial_trisomy_probs 
+
+    
+
+from scipy import linalg
+import numpy as np
+
+def state_initialisation():
+    rng = np.random.default_rng()
+    m = [1,0,0,0]
+    w = [0,0,0,1]
+    if rng.random() > 0.5:
+        state = m
+    else:
+        state = w
+    return state
+
+def trisomy_prob_matrix(initial_state, mu, gamma, time_points):
+    RateMatrix = np.array([[-3*mu, gamma, 0, 0], 
+                                [3*mu, -(gamma+2*mu), 2*gamma, 0], 
+                                [0, 2*mu, -(2*gamma+mu), 3*gamma],
+                                [0, 0, mu, -3*gamma]])
+
+    Probabilities = np.zeros((len(time_points), len(initial_state)))
+    for i, t in enumerate(time_points):
+        ProbStates = linalg.expm(RateMatrix * t) @ initial_state
+        Probabilities[i] = ProbStates / np.sum(ProbStates) 
+    return Probabilities
+
+#put dt as fn argumeent
+
+def calc_dt_trisomy(mu, gamma):
+    dt_max = 0.1 / np.max((
+    3*mu, 
+    3*gamma)
+    )
+    return dt_max 
+    
+
+def tri_dt(start_evoln, end_evoln, dt_max):
+    n = int((end_evoln-start_evoln) / dt_max)  # Number of time steps.
+    t = np.linspace(start_evoln, end_evoln, n) 
+    dt = t[1] - t[0]
+    return dt
+
+def state_simulation(initial_state, mu, gamma, dt):
+    rng = np.random.default_rng()
+    m,k,d,w = initial_state
+    
+    p_m_to_k = 3 * mu * dt if m == 1 else 0  
+    p_k_to_m = gamma * dt if k == 1 else 0         
+    p_k_to_d = 2*mu * dt if k == 1 else 0      
+    p_d_to_k = 2*gamma * dt if d == 1 else 0    
+    p_d_to_w = mu * dt if d == 1 else 0      
+    p_w_to_d = 3*gamma * dt if w == 1 else 0  
+
+
+    if m == 1:
+        if rng.random() < p_m_to_k:
+            m, k, d, w = 0, 1, 0, 0 
+
+    elif k == 1:
+        rand_val = rng.random()
+        if rand_val < p_k_to_m:
+            m, k, d, w = 1, 0, 0, 0
+            
+        elif rand_val < p_k_to_d + p_k_to_m:
+            m, k, d, w = 0, 0, 1, 0
+
+        else:
+            m, k, d, w = 0, 1, 0, 0
+
+    elif d == 1:
+        rand_val = rng.random()
+        if rand_val < p_d_to_k:
+            m, k, d, w = 0, 1, 0, 0
+            
+        elif rand_val < p_d_to_w + p_d_to_k:
+            m, k, d, w = 0, 0, 0, 1
+
+        else:
+            m, k, d, w = 0, 0, 1, 0
+        
+    elif w == 1:
+        if rng.random() < p_w_to_d:
+            m, k, d, w = 0, 0, 1, 0
+
+    return [m, k, d, w]
+
+def run_simulation_trisomy(mu, gamma, initial_state, start_evoln, end_evoln):
+    states = [] 
+    final_states = []
+    dt_max = calc_dt_trisomy(mu, gamma)
+    dt = tri_dt(start_evoln, end_evoln, dt_max)
+    current_state = initial_state
+    for _ in range(int(end_evoln/dt)+1):
+        current_state = state_simulation(current_state, mu, gamma,dt)
+        states.append(current_state)
+    final_states.append(states[-1])
+    
+    return final_states
+
+def trisomy_beta_vals(states):
+    beta_vals = [(state[1] + 2 * state[2] + 3 * state[3]) / 3 for state in states]
+    return beta_vals
+
+def beta_convert_params(mu, kappa):
+    """
+    Convert mean/dispersion parameterization of a beta distribution to the ones
+    scipy supports
+    """
+
+    if np.any(kappa <= 0):
+        raise Exception("kappa must be greater than 0")
+    elif np.any(mu <= 0) or np.any(mu >= 1):
+        raise Exception("mu must be between 0 and 1")
+    
+    alpha = kappa * mu 
+    beta = kappa * (1- mu)
+
+    return alpha, beta
+
+def beta_rvs(mean, kappa, **kwargs):
+    """
+    Generate random samples from a beta distribution with mean/dispersion
+    specified
+    """
+    alpha, beta = beta_convert_params(mean, kappa)
+
+    return stats.beta.rvs(alpha, beta, **kwargs)
+
+def rescale_beta(beta, delta, eta):
+    """
+    Linear transform of beta values from between 0 and 1 to between delta and 
+    eta
+    """
+    return (eta - delta) * beta + delta
+
+def add_noise(beta, delta, eta, kappa):
+    """
+    Rescale distribution to lie between delta and eta and add beta distributed 
+    noise
+    """
+    beta_rescale = rescale_beta(beta, delta, eta)
+ 
+    return beta_rvs(beta_rescale, kappa)
+          
+def diploid_prob_matrix(initial_state, mu, gamma, dt, time_points):
+    # Rate matrix
+    R = np.array([
+        [-2 * gamma, mu, 0],
+        [2 * gamma, -(gamma + mu), 2 * mu],
+        [0, gamma, -2 * mu]
+    ])
+
+    # Discrete-time transition matrix
+    P = np.eye(3) + R * dt
+
+    # Normalize to ensure row sums are 1
+    P = np.maximum(P, 0)  # Ensure no negative probabilities
+    P /= P.sum(axis=1, keepdims=True)
+
+    # Initialize state probabilities
+    states = np.zeros((time_points, 3))
+    states[0] = initial_state
+
+    # Simulate state transitions over time
+    for t in range(1, time_points):
+        states[t] = np.random.multinomial(1, states[t-1] @ P)
+
+    return states
+
+def diploid_to_trisomy(mu, gamma, init_fn, num_sites, event_time, patient_age):
+    final_diploid_states = run_simulation_diploid(mu, gamma,init_fn, num_sites, start_evoln=0, end_evoln=event_time, initial_state=None)
+    beta_vals_before = []
+    beta_vals_after = []
+    beta_vals_before.append(diploid_beta_vals(final_diploid_states))
+    beta_vals_before1 = np.array(beta_vals_before)
+
+    for beta_val in beta_vals_before1:
+        noisy_beta_before = add_noise(beta_val, 0.05,0.95,30)
+        
+    trisomy_state_list = []
+    for state in final_diploid_states:
+        trisomy_initial_state = trisomy_event(state)
+        trisomy_states = run_simulation_trisomy(mu, gamma, trisomy_initial_state, start_evoln=0, end_evoln=patient_age-event_time)
+        trisomy_state_list.extend(trisomy_states)
+    beta_vals_after.append(trisomy_beta_vals(trisomy_state_list))
+    beta_vals_after1 = np.array(beta_vals_after)
+    for beta_val in beta_vals_after1:
+        noisy_beta_after = add_noise(beta_val, 0.05,0.95,30)
+
+    hist_plot(noisy_beta_before, noisy_beta_after,'Trisomy', event_time, patient_age-event_time, 'e.png')
+
+    return noisy_beta_before, noisy_beta_after
+
+mu = 0.02                          
+gamma = 0.02 
+diploid_to_trisomy(mu, gamma, ss_initialisation, 1000, 10, 60)
