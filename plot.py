@@ -14,7 +14,7 @@ def plot_prob_dist(time_points, probabilities, plt_title):
     plt.show()
 
 def hist_plot(beta_vals_before, beta_vals_after, event_type, pre_time,post_time,fig_name):
-    plt.hist(beta_vals_before, bins=30, edgecolor='black', alpha=0.5, label=f'Time before event ({pre_time} years)', density=False, align='mid')
+    # plt.hist(beta_vals_before, bins=30, edgecolor='black', alpha=0.5, label=f'Time before event ({pre_time} years)', density=False, align='mid')
     plt.hist(beta_vals_after, bins=30, edgecolor='black', alpha=0.5, label=f'Time after event ({post_time} years)', density=False, align='mid')
     
     plt.xlabel('Beta Values')

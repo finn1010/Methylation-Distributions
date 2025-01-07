@@ -10,7 +10,8 @@ import pandas as pd
 from plot import hist_plot
 from trial_dip import cnloh_sim
 
-# num_sites = np.random.uniform(50, 200, size=J).astype(int)
+# J=4
+# num_sites = np.random.uniform(100, 200, size=J).astype(int)
 # patient_ages = np.random.uniform(60, 80, size=J).astype(int)
 # event_times=[]
 # for patient in patient_ages:
@@ -18,13 +19,13 @@ from trial_dip import cnloh_sim
 
 
 # Model parameters
-mu = 0.02
-gamma = 0.02    
+mu = 0.001
+gamma = 0.001
 type = 4
-event_times = [10,60]
-J=2
-num_sites=[400,400]
-patient_ages=[40,80]
+event_times = [20,35,10,15,60]
+J=5
+num_sites=[600,600,600,600,600]
+patient_ages=[30,40,55,80,70]
 
 
 
@@ -48,7 +49,7 @@ elif type == 3:
 elif type == 4:
     for i in range(len(patient_ages)):
         noisy_beta_after1 = cnloh_sim([0.5,0,0.5], mu, gamma, patient_ages[i], event_times[i], num_sites[i])
-        noisy_beta_before, noisy_beta_after = diploid_to_cnLOH(mu, gamma, state_initialisation, num_sites[i], event_times[i], patient_ages[i])
+        #noisy_beta_before, noisy_beta_after = diploid_to_cnLOH(mu, gamma, state_initialisation, num_sites[i], event_times[i], patient_ages[i])
         vals.append(noisy_beta_after1)
         # hist_plot(noisy_beta_before, noisy_beta_after,'Diploid', event_times[i], patient_ages[i]-event_times[i], 'e.png')
         # hist_plot(noisy_beta_after1, noisy_beta_after1,'Diploid', event_times[i], patient_ages[i]-event_times[i], 'e.png')
@@ -66,6 +67,7 @@ elif type == 6:
         noisy_beta_before, noisy_beta_after = diploid_to_tetraploidy(mu, gamma, state_initialisation, num_sites[i], event_times[i], patient_ages[i])
         K = 4
     # prefix = f'/Users/finnkane/Desktop/ICR/inf_plots/dip_tet/t={event_time}/'
+        vals.append(noisy_beta_after)
 
 vals = np.concatenate(vals)
 
@@ -76,13 +78,15 @@ data = {
     'n': num_sites, 
     'y': vals,  
     'age': patient_ages,
-    'type': type
+    'type': type,
 }
 
-init_values = [{'t': np.random.uniform(5, 70, size=J).tolist()} for _ in range(4)]
+init_values = [{'t': np.random.uniform(1, 70, size=J).tolist()} for _ in range(4)]
 
 fit = model.sample(
     data=data,
+    iter_sampling=1000,  
+    iter_warmup=1000,  
     adapt_delta=0.8,
     max_treedepth=12,
     inits=init_values,
@@ -90,29 +94,19 @@ fit = model.sample(
 )
 summary_df = fit.summary()
 
-filtered_summary = summary_df[~summary_df.index.str.contains("log_lik|y_rep|cache_theta")]
+filtered_summary = summary_df[summary_df.index.str.contains(r"^(t(\[\d+\]|_raw\[\d+\])?|mu|gamma)$", regex=True)]
 print(filtered_summary)
 
-
-
 print(event_times)
-#         K = 2
-        # prefix = f'/Users/finnkane/Desktop/ICR/inf_plots/ss_cnloh/t={event_time}/'
-# noisy_beta_before, noisy_beta_after = diploid_to_cnLOH(mu, gamma, ss_initialisation, num_sites, event_time, patient_age)
-# print(len(noisy_beta_after))
+
 divergences = fit.diagnose()
 print(divergences)
-# idata = az.from_cmdstanpy(
-#     posterior=fit,
-#     posterior_predictive="y_rep",
-#     observed_data={"y": data["y"]}
-# )
-# az.summary(idata, var_names=['mu', 'gamma','t'])
+
 #
 az_fit = az.from_cmdstanpy(
     fit,
-    posterior_predictive="y_rep",  # No brackets here
-    observed_data={"y": vals}      # Use the same data as in `data`
+    posterior_predictive="y_rep",  
+    observed_data={"y": vals}      
 )
 
 az.plot_pair(
@@ -120,6 +114,11 @@ az.plot_pair(
     var_names=["mu", "gamma_raw", "t"], 
     divergences=True,
 )
+az.plot_posterior(az_fit, var_names=["mu", "gamma", "t"])
+plt.title('Posterior Estimates')
+# plt.savefig(f'{prefix}posterior.pdf', format='pdf', dpi=300)
+plt.show()
+
 az.plot_trace(
     az_fit, 
     var_names=["mu", "gamma_raw", "t"], 
@@ -153,10 +152,7 @@ plt.show()
 # az_fit = az.from_cmdstanpy(fit, posterior_predictive=['y_rep'], observed_data={'y': vals})
 
 # # Plot diagnostics
-az.plot_posterior(az_fit, var_names=["mu", "gamma", "t_raw"])
-plt.title('Posterior Estimates')
-# plt.savefig(f'{prefix}posterior.pdf', format='pdf', dpi=300)
-plt.show()
+
 
 # az.plot_forest(az_fit, var_names=["t"], combined=False)
 # plt.title('Forest Plot of Posterior Estimates for t')

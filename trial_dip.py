@@ -104,7 +104,8 @@ def cnloh_sim(initial_state, mu, gamma, patient_age, event_time, num_sites):
     return noisy_beta_vals
 
 # patient_age = 60
-# event_time = 10
+# event_time = 20
+# mu, gamma = 0.02, 0.02
 # noisy_beta = cnloh_sim(initial_state, mu, gamma, patient_age, event_time, num_sites)
 # print(noisy_beta)
 
@@ -114,6 +115,8 @@ def cnloh_sim(initial_state, mu, gamma, patient_age, event_time, num_sites):
 
 
 # from plot import hist_plot
+# mu, gamma = 0.02, 0.02
 # patient_age = 60
-# event_time = 50
+# event_time = 10
+# noisy_beta = cnloh_sim(initial_state, mu, gamma, patient_age, event_time, num_sites)
 # hist_plot(noisy_beta, noisy_beta,'Diploid', event_time, patient_age-event_time, 'e.png')

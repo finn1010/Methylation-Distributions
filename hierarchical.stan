@@ -284,11 +284,12 @@ transformed data {
 
 parameters{
     array[J] real<lower=0> kappa;                //standard deviation of peak
-    real<lower=0> mu;
+    array[J] real<lower=0> mu;
     array[J] real<lower=0,upper=1> eta;          //Beta dist parameter
     array[J] real<lower=0,upper=1> delta;        //Beta dist parameter
-    real<lower=0> gamma_raw;
+    array[J] real<lower=0> gamma_raw;
     array[J] real<lower=0, upper=1> t_raw;  
+    array[J] real theta_t;
 
     
 
@@ -299,16 +300,16 @@ transformed parameters {
     array[J, K+1] real<lower=0> a;            // Beta distribution shape parameter a
     array[J, K+1] real<lower=0> b;           // Beta distribution shape parameter b
     array[J] vector[K+1] cache_theta;       // Site-specific state probabilities
-    real gamma;
+    array[J] real gamma;
     array[J] real t;
 
-    gamma = gamma_raw * mu;
+
 
 
     for (j in 1:J) {
         vector[K+1] pos_obs;
         t[j] = t_raw[j] * age[j]; 
-    
+        gamma[j] = gamma_raw[j] * mu[j];
 
         for (i in 1:K+1) {
             pos_obs[i] = (eta[j] - delta[j]) * position[i] + delta[j];
@@ -318,17 +319,17 @@ transformed parameters {
 
 
         if (type == 1) {
-            cache_theta[j] = ss_cnloh_evln(t[j], age[j], mu, gamma);
+            cache_theta[j] = ss_cnloh_evln(t[j], age[j], mu[j], gamma[j]);
         } else if (type == 2) {
-            cache_theta[j] = ss_tri_evln(t[j], age[j], mu, gamma);
+            cache_theta[j] = ss_tri_evln(t[j], age[j], mu[j], gamma[j]);
         } else if (type == 3) {
-            cache_theta[j] = ss_tet_evln(t[j], age[j], mu, gamma);
+            cache_theta[j] = ss_tet_evln(t[j], age[j], mu[j], gamma[j]);
         } else if (type == 4) {
-            cache_theta[j] = dip_cnloh_evln(t[j], age[j], mu, gamma, [0.5,0,0.5]');
+            cache_theta[j] = dip_cnloh_evln(t[j], age[j], mu[j], gamma[j], [0.5,0,0.5]');
         } else if (type == 5) {
-            cache_theta[j] = dip_tri_evln(t[j], age[j], mu, gamma, [0.5,0,0.5]');
+            cache_theta[j] = dip_tri_evln(t[j], age[j], mu[j], gamma[j], [0.5,0,0.5]');
         } else if (type == 6) {
-            cache_theta[j] = dip_tet_evln(t[j], age[j], mu, gamma, [0.5,0,0.5]');
+            cache_theta[j] = dip_tet_evln(t[j], age[j], mu[j], gamma[j], [0.5,0,0.5]');
         }         
     }
 }
@@ -336,14 +337,12 @@ transformed parameters {
 
 
 model {
-    mu ~ normal(0,0.05);
-    gamma_raw ~ normal(1,0.5);
-
     for (j in 1:J) {
         kappa[j] ~ lognormal(3.6, 0.5);       
         delta[j] ~ beta(5, 95);
         eta[j] ~ beta(95, 5);
-
+        mu[j] ~ normal(0,0.05);
+        gamma_raw[j] ~ normal(1,0.5);
         for (i in start_idx[j]:(start_idx[j+1] - 1)) {
             vector[K+1] log_likelihood = log(cache_theta[j]);
 
