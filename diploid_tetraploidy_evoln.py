@@ -60,6 +60,8 @@ def diploid_to_tetraploidy_prob_dist(initial_state, mu, gamma, event_time, evoln
     plt.show()
     
 initial_state = ss_initialisation(mu,gamma)
+initial_state = [0.5,0,0.5]
+num_sites = 10000
 event_time = 10
 evoln_time = 60
 diploid_to_tetraploidy_prob_dist(initial_state, mu, gamma, event_time, evoln_time, '/Users/finnkane/Desktop/ICR/plots/Tetraploidy/Prob/tet_prob_tau=10')

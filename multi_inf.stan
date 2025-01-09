@@ -88,20 +88,12 @@ functions {
         return R;
      }
 
-    vector diploid_prob(real t, vector initial_state, real gamma, real mu) {
+    vector diploid_prob(real t, vector initial_state, real mu, real gamma) {
         matrix[3, 3] R = dip_rate_matrix(mu, gamma);
-        matrix[3, 1] initial_state_matrix;
-        initial_state_matrix[, 1] = initial_state;
-        matrix[3, 1] F = matrix_exp(t * R) * initial_state_matrix;
-
-        vector[3] probs = to_vector(F);
-
-        // Sanity check for negative probabilities
-        if (min(probs) < 0 || abs(sum(probs) - 1) > 1e-6) {
-            reject("Invalid probabilities in diploid_prob: ", probs);
-        }
-
-        return probs;
+        matrix[3, 1] init_mat;
+        init_mat[, 1] = initial_state;
+        matrix[3, 1] F = scale_matrix_exp_multiply(t, R, init_mat);
+        return to_vector(F);
     }
 
 
@@ -359,6 +351,7 @@ model {
 generated quantities {
     vector[sum(n)] y_rep;         // Posterior predictive samples (flat vector)
     vector[sum(n)] log_lik;       // Log-likelihood values (flat vector)
+    array[sum(n), K+1] real log_lik_sep;  // Log-likelihood values for each state per sample
 
     for (j in 1:J) {
         for (i in start_idx[j]:(start_idx[j+1] - 1)) {
@@ -372,7 +365,11 @@ generated quantities {
                 log_likelihood[k] += beta_lpdf(y[i] | a[j, k], b[j, k]);
             }
             log_lik[i] = log_sum_exp(log_likelihood);
+            
+            for (k in 1:K+1) {
+                log_lik_sep[i, k] = log_likelihood[k];
+            }
         }
     }
 }
-
+        

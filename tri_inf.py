@@ -85,4 +85,7 @@ def diploid_to_trisomy(mu, gamma, init_fn, num_sites, event_time, patient_age):
 
 # mu = 0.02                          
 # gamma = 0.02 
-# diploid_to_trisomy(mu, gamma, ss_initialisation, 1000, 10, 60)
+# def inits():
+#     return [0.5,0,0.5]
+# diploid_to_trisomy(mu, gamma, inits, 10000, 10, 60)
+# diploid_to_trisomy(mu, gamma, inits, 10000, 50, 60)

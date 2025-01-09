@@ -11,10 +11,7 @@ def state_simulation(initial_state, mu, gamma, t, num_sites):
 
     initial_state_array = np.array(initial_state)
     state_probs = linalg.expm(R * t) @ initial_state_array
-
-    sampled_state = np.random.multinomial(num_sites, state_probs)
-    sampled_state = sampled_state.tolist()
-    return sampled_state
+    return state_probs
 
 
 def cnloh_event(final_states):
@@ -38,18 +35,18 @@ def calculate_individual_beta_vals(states):
 
     return beta_vals
 
-initial_state = [0.5,0,0.5]
-mu, gamma = 0.02, 0.02
-t = 2
-num_sites=10000
-states = state_simulation(initial_state, mu, gamma, 70, num_sites)
-states = cnloh_event(states)
-# print(states)
-normalised_states = np.array(states) / np.sum(states)
-states = state_simulation(normalised_states,mu,gamma,10,num_sites)
-beta_vals = calculate_individual_beta_vals(states)
-patient_age = 50
-event_time = 25
+# initial_state = [0.5,0,0.5]
+# mu, gamma = 0.02, 0.02
+# t = 2
+# num_sites=10000
+# states = state_simulation(initial_state, mu, gamma, 70, num_sites)
+# states = cnloh_event(states)
+# # print(states)
+# normalised_states = np.array(states) / np.sum(states)
+# states = state_simulation(normalised_states,mu,gamma,10,num_sites)
+# beta_vals = calculate_individual_beta_vals(states)
+# patient_age = 50
+# event_time = 25
 def beta_convert_params(mu, kappa):
     """
     Convert mean/dispersion parameterization of a beta distribution to the ones
@@ -96,19 +93,21 @@ def add_noise(beta, delta, eta, kappa):
 def cnloh_sim(initial_state, mu, gamma, patient_age, event_time, num_sites):
     states = state_simulation(initial_state, mu, gamma, event_time, num_sites)
     states = cnloh_event(states)
-    normalised_states = np.array(states) / np.sum(states)
-    states = state_simulation(normalised_states,mu,gamma,patient_age - event_time,num_sites)
-    beta_vals = calculate_individual_beta_vals(states)
+    states = state_simulation(states,mu,gamma,patient_age - event_time,num_sites)
+    sampled_state = np.random.multinomial(num_sites, states)
+    sampled_state = sampled_state.tolist() 
+    beta_vals = calculate_individual_beta_vals(sampled_state)
     noisy_beta_vals = add_noise(beta_vals, 0.05,0.95,30)
 
-    return noisy_beta_vals
+    return sampled_state, noisy_beta_vals
 
+# initial_state = [0.5,0,0.5]
 # patient_age = 60
-# event_time = 20
+# event_time = 10
 # mu, gamma = 0.02, 0.02
-# noisy_beta = cnloh_sim(initial_state, mu, gamma, patient_age, event_time, num_sites)
-# print(noisy_beta)
-
+# num_sites = 1000
+# states, noisy_beta = cnloh_sim(initial_state, mu, gamma, patient_age, event_time, num_sites)
+# print(states)
 # from plot import hist_plot
 
 # hist_plot(noisy_beta, noisy_beta,'Diploid', event_time, patient_age-event_time, 'e.png')
@@ -117,6 +116,6 @@ def cnloh_sim(initial_state, mu, gamma, patient_age, event_time, num_sites):
 # from plot import hist_plot
 # mu, gamma = 0.02, 0.02
 # patient_age = 60
-# event_time = 10
+# event_time = 50
 # noisy_beta = cnloh_sim(initial_state, mu, gamma, patient_age, event_time, num_sites)
 # hist_plot(noisy_beta, noisy_beta,'Diploid', event_time, patient_age-event_time, 'e.png')

@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 from plot import hist_plot
 from trial_dip import cnloh_sim
+from trial_tri import trisomy_sim
+from scipy.special import softmax
 
 # J=4
 # num_sites = np.random.uniform(100, 200, size=J).astype(int)
@@ -19,17 +21,18 @@ from trial_dip import cnloh_sim
 
 
 # Model parameters
-mu = 0.001
-gamma = 0.001
+mu = 0.005
+gamma = 0.005
 type = 4
-event_times = [20,35,10,15,60]
-J=5
-num_sites=[600,600,600,600,600]
-patient_ages=[30,40,55,80,70]
+event_times = [20,35,10,15,60,25,10,44,50,18]
+J=10
+num_sites=[300,300,300,300,300,300,300,300,300,300]
+patient_ages=[30,40,55,80,70,30,60,90,60,35]
 
 
 
 vals = []
+ground_states = []
 if type == 1:
     for i in range(len(patient_ages)):
         noisy_beta_before, noisy_beta_after = diploid_to_cnLOH(mu, gamma, ss_initialisation, num_sites[i], event_times[i], patient_ages[i])
@@ -46,20 +49,21 @@ elif type == 3:
         noisy_beta_before, noisy_beta_after = diploid_to_tetraploidy(mu, gamma, ss_initialisation, num_sites[i], event_times[i], patient_ages[i])
         K = 4
     # prefix = f'/Users/finnkane/Desktop/ICR/inf_plots/ss_tet/t={event_time}/'
+
 elif type == 4:
     for i in range(len(patient_ages)):
-        noisy_beta_after1 = cnloh_sim([0.5,0,0.5], mu, gamma, patient_ages[i], event_times[i], num_sites[i])
-        #noisy_beta_before, noisy_beta_after = diploid_to_cnLOH(mu, gamma, state_initialisation, num_sites[i], event_times[i], patient_ages[i])
-        vals.append(noisy_beta_after1)
-        # hist_plot(noisy_beta_before, noisy_beta_after,'Diploid', event_times[i], patient_ages[i]-event_times[i], 'e.png')
-        # hist_plot(noisy_beta_after1, noisy_beta_after1,'Diploid', event_times[i], patient_ages[i]-event_times[i], 'e.png')
-
+        states, noisy_beta_after = cnloh_sim([0.5,0,0.5], mu, gamma, patient_ages[i], event_times[i], num_sites[i])
+        vals.append(noisy_beta_after)
+        m, k, w = states
+        ground_states.extend([2] * m + [1] * k + [0] * w)
         K = 2
     # prefix = f'/Users/finnkane/Desktop/ICR/inf_plots/dip_cnloh/t={event_time}/'
 elif type == 5:
     for i in range(len(patient_ages)):
-        noisy_beta_before, noisy_beta_after = diploid_to_trisomy(mu, gamma, state_initialisation, num_sites[i], event_times[i], patient_ages[i])
-        vals.append(noisy_beta_after)
+        # noisy_beta_before, noisy_beta_after = diploid_to_trisomy(mu, gamma, state_initialisation, num_sites[i], event_times[i], patient_ages[i])
+        noisy_beta_after1 = trisomy_sim([0.5,0,0.5], mu, gamma, patient_ages[i], event_times[i], num_sites[i])
+
+        vals.append(noisy_beta_after1)
         K = 3
     # prefix = f'/Users/finnkane/Desktop/ICR/inf_plots/dip_tri/t={event_time}/'
 elif type == 6:
@@ -81,8 +85,15 @@ data = {
     'type': type,
 }
 
-init_values = [{'t': np.random.uniform(1, 70, size=J).tolist()} for _ in range(4)]
-
+init_values = [
+    {
+        't': [
+            np.random.uniform(0.1 * patient_ages[j], 0.9 * patient_ages[j])
+            for j in range(J)
+        ]
+    }
+    for _ in range(4)  # Number of chains
+]
 fit = model.sample(
     data=data,
     iter_sampling=1000,  
@@ -96,6 +107,35 @@ summary_df = fit.summary()
 
 filtered_summary = summary_df[summary_df.index.str.contains(r"^(t(\[\d+\]|_raw\[\d+\])?|mu|gamma)$", regex=True)]
 print(filtered_summary)
+
+log_lik_samples = fit.stan_variable("log_lik_sep")
+mean_log_lik = np.mean(log_lik_samples, axis=0)
+marginal_probs = np.apply_along_axis(softmax, axis=0, arr=mean_log_lik.reshape(-1, K+1))
+predicted_peaks = np.argmax(marginal_probs, axis=1)
+accuracy = np.mean(predicted_peaks == ground_states)
+print(accuracy)
+
+
+t_summary = summary_df[summary_df.index.str.contains(r'^t\[\d+\]$')]
+
+event_time_std = t_summary['StdDev'].values
+
+patient_age_minus_event_time = np.array(patient_ages) - np.array(event_times)
+
+
+plt.figure(figsize=(10, 6))
+plt.scatter(patient_age_minus_event_time, event_time_std, color='blue', alpha=0.7)
+plt.plot(
+    np.unique(patient_age_minus_event_time),
+    np.poly1d(np.polyfit(patient_age_minus_event_time, event_time_std, 1))(np.unique(patient_age_minus_event_time)),
+    color='orange',
+    linestyle='--'
+)
+
+plt.xlabel('Time since event')
+plt.ylabel('Standard Deviation of mean event time (t)')
+plt.grid(True)
+plt.show()
 
 print(event_times)
 
